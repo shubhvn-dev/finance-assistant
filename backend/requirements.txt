@@ -4,3 +4,4 @@ anthropic
 requests
 python-dotenv
 pydantic
+websockets

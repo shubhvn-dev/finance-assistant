@@ -1,31 +1,30 @@
 export interface Persona {
   id: string;
   name: string;
-  difficulty: 'Easy' | 'Medium' | 'Aggressive';
+  difficulty: 'Easy' | 'Medium' | 'Hard';
   description: string;
-  agentId: string;
 }
 
 export const PERSONAS: Persona[] = [
   {
-    id: 'easy',
-    name: 'Friendly Client',
+    id: 'marcus',
+    name: 'Marcus Johnson',
     difficulty: 'Easy',
-    description: 'A friendly client who is open to suggestions and easy to talk to.',
-    agentId: process.env.NEXT_PUBLIC_AGENT_ID_EASY || 'placeholder-easy',
+    description:
+      'A 34-year-old startup founder with $250k portfolio. Open-minded but needs convincing.',
   },
   {
-    id: 'medium',
-    name: 'Busy Professional',
+    id: 'sarah',
+    name: 'Sarah Mitchell',
     difficulty: 'Medium',
-    description: 'Has some questions and limited time. Requires concise communication.',
-    agentId: process.env.NEXT_PUBLIC_AGENT_ID_MEDIUM || 'placeholder-medium',
+    description:
+      'A 45-year-old VP with $750k portfolio. Busy professional with limited time.',
   },
   {
-    id: 'aggressive',
-    name: 'Skeptical Investor',
-    difficulty: 'Aggressive',
-    description: 'Highly skeptical, interrupts frequently, and challenges your expertise.',
-    agentId: process.env.NEXT_PUBLIC_AGENT_ID_AGGRESSIVE || 'placeholder-aggressive',
+    id: 'robert',
+    name: 'Robert Chen',
+    difficulty: 'Hard',
+    description:
+      'A 58-year-old retired engineer with $400k portfolio. Highly skeptical and resistant.',
   },
 ];

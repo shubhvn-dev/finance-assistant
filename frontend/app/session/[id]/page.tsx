@@ -31,7 +31,7 @@ export default async function SessionPage({ params }: SessionPageProps) {
           <p className="text-slate-500">{persona.description}</p>
         </div>
 
-        <VoiceCallUI agentId={persona.agentId} />
+        <VoiceCallUI personaId={persona.id} />
       </div>
     </main>
   );

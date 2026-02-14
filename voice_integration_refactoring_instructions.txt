@@ -1,0 +1,9 @@
+Currently the frontend code has been written to integrate an elevenlabs agent that uses agent id corresponding to a publiushed agent
+The frontend has the Voice interface already setup as described above in the VoiceCallUI.tsx file
+I need you to change the integration as follows:
+- I am switching from using the elevenlabs agent to the eleven labs text to speech API, or whatever API is necessary to replicate this functionality
+For any reference related to this you can refer this link for the documentation: "https://elevenlabs.io/docs/api-reference/text-to-speech/v-1-text-to-speech-voice-id-stream-input"
+Essentially this will create a websocket setup
+Make any changes such as an endpoint to hanlde all of this if required in the backend/ directory
+There should be a button to start and end the call as it already displays in the current UI. We are just switching the agent to the websocket API integration
+Ask any clarifying questions if necessary

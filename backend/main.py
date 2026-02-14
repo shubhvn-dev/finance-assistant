@@ -2,7 +2,7 @@ import json
 import os
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -10,6 +10,7 @@ import anthropic
 
 from personas import PERSONAS
 from prompts import get_persona_prompt, SCORING_PROMPT
+from app.websocket.handler import ConversationWebSocketHandler
 
 load_dotenv()
 
@@ -24,6 +25,9 @@ app.add_middleware(
 )
 
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+# Initialize WebSocket handler
+ws_handler = ConversationWebSocketHandler()
 
 
 class RespondRequest(BaseModel):
@@ -124,3 +128,9 @@ Score this call now."""
         "user_id": req.user_id,
         "scorecard": scorecard,
     }
+
+
+@app.websocket("/ws/conversation")
+async def conversation_websocket(websocket: WebSocket):
+    """WebSocket endpoint for real-time voice conversations"""
+    await ws_handler.handle_connection(websocket)
