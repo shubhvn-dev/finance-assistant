@@ -109,7 +109,10 @@ Score this call now."""
         messages=[{"role": "user", "content": scoring_message}],
     )
 
-    raw = response.content[0].text
+    raw = response.content[0].text.strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1]
+        raw = raw.rsplit("```", 1)[0].strip()
 
     try:
         scorecard = json.loads(raw)
