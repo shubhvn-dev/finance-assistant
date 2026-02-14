@@ -94,7 +94,7 @@ Financial advisors need to make cold calls to grow their book of business, but:
 ## Folder Structure
 
 ```
-finance-assistant/
+finance-assistantclear/
 ├── app/                        # Next.js App Router
 │   ├── (auth)/                 # Login / signup pages
 │   ├── dashboard/              # Session history + trends
