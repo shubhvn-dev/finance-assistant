@@ -18,14 +18,14 @@ export default function Home() {
           <p className="text-slate-500 text-center mt-2">Start a new roleplay session with an AI persona</p>
         </Link>
 
-        <Link 
-          href="/dashboard"
+        <Link
+          href="/call-logs"
           className="group flex flex-col items-center justify-center p-8 bg-white rounded-xl shadow-sm border border-slate-200 hover:border-blue-500 hover:shadow-md transition-all"
         >
           <div className="p-4 bg-purple-50 rounded-full mb-4 group-hover:bg-purple-100 transition-colors">
             <History className="w-8 h-8 text-purple-600" />
           </div>
-          <h2 className="text-xl font-semibold text-slate-900">Previous Calls</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Call Logs</h2>
           <p className="text-slate-500 text-center mt-2">Review scorecards and history</p>
         </Link>
       </div>

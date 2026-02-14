@@ -6,6 +6,7 @@ export interface Session {
   persona_id: string;
   conversation_id?: string;
   started_at: string;
+  ended_at?: string;
   status: string;
 }
 
