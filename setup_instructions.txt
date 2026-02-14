@@ -1,0 +1,5 @@
+I need this repo to be setup for my finance AI project
+I want a separate backend and frontend folder within the root directory
+the backend will be FastAPI and python based, and the frontend will be Next or React TypeScript based hence the separation
+Make the required changes to the file system to get this done as per project.md ignore the current structure as we are modifying it based on the above point
+

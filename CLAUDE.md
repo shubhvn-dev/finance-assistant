@@ -36,9 +36,9 @@
 ## Verification Habits
 
 ### Before Every Commit
-- [ ] `npm run lint` passes (zero warnings)
-- [ ] `npm run typecheck` passes
-- [ ] `npm run test` passes
+ - [ ] **Frontend:** `npm run lint` & `npm run typecheck` pass
+ - [ ] **Backend:** `ruff check .` (or flake8) passes
+ - [ ] **Tests:** `npm run test` (Frontend) & `pytest` (Backend) pass
 - [ ] Manually tested the happy path: start call → 5 turns → scorecard renders
 - [ ] Manually tested one sad path: e.g., user disconnects mid-call, API timeout
 
@@ -52,12 +52,14 @@
 
 ### Run Commands
 ```bash
-npm run dev          # Local dev server
-npm run lint         # ESLint
-npm run typecheck    # TypeScript strict
-npm run test         # Vitest
-npm run build        # Production build
-bl deploy            # Deploy agent to Blaxel
+# Backend (Terminal 1)
+cd backend && uvicorn app.main:app --reload
+
+# Frontend (Terminal 2)
+cd frontend && npm run dev
+
+# Deployment
+bl deploy            # Deploy backend agent to Blaxel
 ```
 
 ---

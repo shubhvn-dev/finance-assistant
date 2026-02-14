@@ -81,6 +81,7 @@ Financial advisors need to make cold calls to grow their book of business, but:
 | Layer | Technology | Rationale |
 |-------|-----------|-----------|
 | **Frontend** | Next.js 14+ (App Router), TypeScript, Tailwind CSS | SSR for dashboard, client components for voice UI, fast iteration |
+| **Backend** | Python (FastAPI) | Robust handling of AI logic, LangChain integration, and data processing |
 | **Voice** | ElevenLabs Conversational AI 2.0 (WebSocket API) | Sub-100ms latency, state-of-the-art turn-taking, multi-character support |
 | **AI / Persona + Scoring** | Anthropic Claude (via API) | Best-in-class instruction following for persona roleplay + structured scoring output |
 | **Prospect Data** | Finny API | Real financial prospect data (demographics, net worth signals, money-in-motion events) to ground personas in reality |
