@@ -3,7 +3,8 @@ __pycache__/
 .env
 .DS_Store
 # Dependencies
-node_modules/
+frontend/node_modules/
+frontend/.next/
 
 # Next.js
 /.next/
@@ -28,6 +29,7 @@ yarn-error.log*
 # Environment Variables
 # Critical: See CLAUDE.md - No hardcoded API keys or secrets
 .env
+.env.example
 .env.local
 .env.development.local
 .env.test.local
