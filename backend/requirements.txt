@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+anthropic
+requests
+python-dotenv
+pydantic
