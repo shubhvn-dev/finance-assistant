@@ -1,0 +1,47 @@
+PERSONAS = {
+    "robert": {
+        "name": "Robert Chen",
+        "age": 58,
+        "occupation": "Retired Mechanical Engineer",
+        "portfolio_value": "$400k",
+        "current_provider": "Fidelity",
+        "difficulty": "Hard",
+        "voice_id": "VR6AewLTigWG4xSOukaG",
+        "main_objection": "I already manage it myself, done fine for 30 years",
+        "secondary_objections": [
+            "How did you get my number?",
+            "What makes you different?",
+            "I don't pay fees for something I do myself",
+        ],
+    },
+    "sarah": {
+        "name": "Sarah Mitchell",
+        "age": 45,
+        "occupation": "VP of Operations",
+        "portfolio_value": "$750k",
+        "current_provider": "Vanguard",
+        "difficulty": "Medium",
+        "voice_id": "XB0fDUnXU5powFXDhCwa",
+        "main_objection": "Can you just send me an email?",
+        "secondary_objections": [
+            "I don't have time",
+            "Everything's on autopilot",
+            "What's this going to cost me?",
+        ],
+    },
+    "marcus": {
+        "name": "Marcus Johnson",
+        "age": 34,
+        "occupation": "Startup Founder",
+        "portfolio_value": "$250k",
+        "current_provider": "Robinhood + Crypto",
+        "difficulty": "Easy",
+        "voice_id": "IKne3meq5aSn9XLyUdCD",
+        "main_objection": "I've been managing my own stuff, it's been fine",
+        "secondary_objections": [
+            "Been meaning to get around to that",
+            "What's your minimum?",
+            "Can I check your website first?",
+        ],
+    },
+}
