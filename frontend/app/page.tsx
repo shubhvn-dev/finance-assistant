@@ -4,8 +4,14 @@ import { Phone, History } from 'lucide-react';
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-slate-50">
-      <h1 className="text-4xl font-bold mb-12 text-slate-900">Finance Assistant</h1>
-      
+      <div className="text-center mb-12 max-w-2xl">
+        <h1 className="text-5xl font-bold mb-4 text-slate-900">Finance Assistant</h1>
+        <p className="text-lg text-slate-600 leading-relaxed">
+          Practice your financial advisory skills with AI-powered personas.
+          Get instant feedback on your cold calls and improve your pitch with personalized scorecards.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
         <Link 
           href="/session/new"
