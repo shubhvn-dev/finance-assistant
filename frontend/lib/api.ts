@@ -33,6 +33,14 @@ export interface Message {
   created_at: string;
 }
 
+export interface Annotation {
+  turn_number: number;
+  type: 'good' | 'bad';
+  label: string;
+  insight: string;
+  rewrite?: string;
+}
+
 export interface Scorecard {
   overall_score: number;
   opener_score: number;
@@ -47,6 +55,7 @@ export interface Scorecard {
   biggest_mistake: string;
   what_to_say_instead: string;
   meeting_booked: boolean;
+  annotations?: Annotation[];
 }
 
 export interface SessionDetail {

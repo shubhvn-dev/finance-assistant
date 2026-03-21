@@ -48,6 +48,16 @@ SCORING INSTRUCTIONS:
 - If the call was too short to evaluate a category (fewer than 2 turns), score that category 0 and write "Call ended too early to evaluate."
 - The meeting_booked field should be true ONLY if the prospect explicitly agreed to a meeting or follow-up call.
 
+ANNOTATION INSTRUCTIONS:
+- Identify 2 to 4 specific advisor turns that were either notably good or notably bad.
+- Only annotate ADVISOR turns (not prospect turns).
+- For each annotation, use the exact turn_number from the transcript.
+- type must be either "good" or "bad".
+- label: a 2-4 word category name (e.g. "Missed opportunity", "Strong opener", "Lost credibility", "Great reframe").
+- insight: 1-2 sentences explaining exactly what happened and why it mattered.
+- rewrite: REQUIRED for "bad" annotations — the exact words the advisor should have said instead. Omit this field for "good" annotations.
+- Focus on the moments with the highest coaching value. Skip turns that were merely average.
+
 Return ONLY valid JSON with this EXACT structure (no markdown, no code fences, just the raw JSON):
 {
   "overall_score": 5,
@@ -70,5 +80,20 @@ Return ONLY valid JSON with this EXACT structure (no markdown, no code fences, j
   "best_moment": "Quote or reference the advisor's strongest moment",
   "biggest_mistake": "Quote or reference the advisor's weakest moment",
   "what_to_say_instead": "A concrete alternative line the advisor could have used",
-  "meeting_booked": false
+  "meeting_booked": false,
+  "annotations": [
+    {
+      "turn_number": 2,
+      "type": "bad",
+      "label": "Lost credibility",
+      "insight": "You apologized for calling instead of owning the interruption. This immediately put you in a defensive posture.",
+      "rewrite": "Try instead: 'I know this is out of the blue — I'll be brief. I work with portfolios in your range and I spotted something worth 90 seconds of your time.'"
+    },
+    {
+      "turn_number": 4,
+      "type": "good",
+      "label": "Strong reframe",
+      "insight": "You pivoted from fees to long-term performance with a concrete number. That's what softened his resistance."
+    }
+  ]
 }"""

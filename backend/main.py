@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-import anthropic
+import google.generativeai as genai
 
 from app.core.database import get_pool, close_pool, get_db_connection
 from app.models.session import (
@@ -45,7 +45,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 
 class RespondRequest(BaseModel):
@@ -87,17 +87,16 @@ def respond(req: RespondRequest):
 
     messages = []
     for entry in req.conversation_history:
-        role = "user" if entry["role"] == "advisor" else "assistant"
-        messages.append({"role": role, "content": entry["content"]})
+        role = "user" if entry["role"] == "advisor" else "model"
+        messages.append({"role": role, "parts": [entry["content"]]})
 
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=256,
-        system=system_prompt,
-        messages=messages,
+    model = genai.GenerativeModel(
+        model_name="gemini-2.0-flash",
+        system_instruction=system_prompt,
     )
+    response = model.generate_content(messages)
 
-    reply = response.content[0].text
+    reply = response.text
 
     return {
         "persona_id": req.persona_id,
@@ -124,14 +123,13 @@ Transcript:
 
 Score this call now."""
 
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=1024,
-        system=SCORING_PROMPT,
-        messages=[{"role": "user", "content": scoring_message}],
+    model = genai.GenerativeModel(
+        model_name="gemini-2.0-flash",
+        system_instruction=SCORING_PROMPT,
     )
+    response = model.generate_content(scoring_message)
 
-    raw = response.content[0].text.strip()
+    raw = response.text.strip()
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1]
         raw = raw.rsplit("```", 1)[0].strip()
@@ -254,14 +252,13 @@ Transcript:
 
 Score this call now."""
 
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1024,
-            system=SCORING_PROMPT,
-            messages=[{"role": "user", "content": scoring_message}],
+        model = genai.GenerativeModel(
+            model_name="gemini-2.0-flash",
+            system_instruction=SCORING_PROMPT,
         )
+        response = model.generate_content(scoring_message)
 
-        raw = response.content[0].text.strip()
+        raw = response.text.strip()
 
         # Strip markdown code fences if present
         if raw.startswith("```"):
@@ -287,6 +284,7 @@ Score this call now."""
         objection_handling = scorecard_json.get("objection_handling", {})
         tone_and_confidence = scorecard_json.get("tone_and_confidence", {})
         close_attempt = scorecard_json.get("close_attempt", {})
+        annotations = scorecard_json.get("annotations", [])
 
         # Insert scorecard
         await conn.execute(
@@ -298,9 +296,9 @@ Score this call now."""
                 tone_confidence_score, tone_confidence_feedback,
                 close_attempt_score, close_attempt_feedback,
                 best_moment, biggest_mistake, what_to_say_instead,
-                meeting_booked, generated_at
+                meeting_booked, annotations, generated_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
             """,
             session_id,
             overall_score,
@@ -316,6 +314,7 @@ Score this call now."""
             scorecard_json.get("biggest_mistake", ""),
             scorecard_json.get("what_to_say_instead", ""),
             scorecard_json.get("meeting_booked", False),
+            json.dumps(annotations),
         )
 
         # Update session status
@@ -344,6 +343,7 @@ Score this call now."""
                 biggest_mistake=scorecard_json.get("biggest_mistake", ""),
                 what_to_say_instead=scorecard_json.get("what_to_say_instead", ""),
                 meeting_booked=scorecard_json.get("meeting_booked", False),
+                annotations=annotations,
             ),
         )
 
@@ -393,7 +393,7 @@ async def get_session(session_id: str):
                    tone_confidence_score, tone_confidence_feedback,
                    close_attempt_score, close_attempt_feedback,
                    best_moment, biggest_mistake, what_to_say_instead,
-                   meeting_booked
+                   meeting_booked, annotations
             FROM scorecards
             WHERE session_id = $1
             """,
@@ -402,6 +402,8 @@ async def get_session(session_id: str):
 
         scorecard = None
         if scorecard_row:
+            raw_annotations = scorecard_row["annotations"]
+            annotations = json.loads(raw_annotations) if isinstance(raw_annotations, str) else (raw_annotations or [])
             scorecard = ScorecardData(
                 overall_score=scorecard_row["overall_score"],
                 opener_score=scorecard_row["opener_score"],
@@ -416,6 +418,7 @@ async def get_session(session_id: str):
                 biggest_mistake=scorecard_row["biggest_mistake"],
                 what_to_say_instead=scorecard_row["what_to_say_instead"],
                 meeting_booked=scorecard_row["meeting_booked"],
+                annotations=annotations,
             )
 
         return SessionDetail(

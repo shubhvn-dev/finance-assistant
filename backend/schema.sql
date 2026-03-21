@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS scorecards (
     biggest_mistake TEXT,
     what_to_say_instead TEXT,
     meeting_booked BOOLEAN DEFAULT false,
+    annotations JSONB DEFAULT NULL,
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

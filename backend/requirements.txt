@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-anthropic
+google-generativeai
 requests
 python-dotenv
 pydantic
