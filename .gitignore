@@ -1,5 +1,6 @@
 __pycache__/
 *.pyc
+.worktrees/
 .env
 .DS_Store
 # Dependencies
