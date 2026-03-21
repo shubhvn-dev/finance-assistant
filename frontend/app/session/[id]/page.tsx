@@ -8,21 +8,23 @@ import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createSession } from '@/lib/api';
 
+const PERSONA_ID_MAP: Record<string, string> = {
+  easy: 'marcus',
+  medium: 'sarah',
+  aggressive: 'robert',
+};
+
+export function getBackendPersonaId(personaId: string): string {
+  return PERSONA_ID_MAP[personaId] || 'marcus';
+}
+
 export default function SessionPage() {
   const params = useParams();
   const id = params?.id as string;
   const persona = PERSONAS.find((p) => p.id === id);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(true);
-
-  // Map frontend persona IDs to backend persona IDs
-  const personaIdMap: Record<string, string> = {
-    'easy': 'marcus',
-    'medium': 'sarah',
-    'aggressive': 'robert',
-  };
-
-  const backendPersonaId = personaIdMap[id] || 'marcus';
+  const backendPersonaId = getBackendPersonaId(id);
 
   // Create session on page load
   useEffect(() => {

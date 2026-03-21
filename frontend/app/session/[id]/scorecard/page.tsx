@@ -31,28 +31,6 @@ export default async function ScorecardPage({ params }: ScorecardPageProps) {
 
   const { session, messages, scorecard } = sessionDetail;
 
-  if (!scorecard) {
-    return (
-      <main className="min-h-screen bg-slate-50 p-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 text-center">
-            <h1 className="text-2xl font-bold text-yellow-900 mb-4">Scorecard Not Available</h1>
-            <p className="text-yellow-700 mb-6">
-              This session has not been scored yet. Please complete the call first.
-            </p>
-            <Link
-              href="/session/new"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition-colors"
-            >
-              <Home className="w-5 h-5" />
-              Back to Home
-            </Link>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   const personaName = PERSONA_NAMES[session.persona_id] || session.persona_id;
 
   return (
@@ -78,7 +56,16 @@ export default async function ScorecardPage({ params }: ScorecardPageProps) {
         </div>
 
         {/* Scorecard */}
-        <Scorecard scorecard={scorecard} personaName={personaName} />
+        {scorecard ? (
+          <Scorecard scorecard={scorecard} personaName={personaName} />
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 text-center">
+            <h1 className="text-2xl font-bold text-yellow-900 mb-4">Scorecard Not Available</h1>
+            <p className="text-yellow-700">
+              This session has not been scored yet. Please complete the call first.
+            </p>
+          </div>
+        )}
 
         {/* Transcript */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 mt-6">

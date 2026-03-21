@@ -1,5 +1,19 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+export function parseApiError(error: unknown, fallbackMessage: string): string {
+  if (typeof error === 'object' && error !== null) {
+    if ('detail' in error && typeof error.detail === 'string') {
+      return error.detail;
+    }
+
+    if ('message' in error && typeof error.message === 'string') {
+      return error.message;
+    }
+  }
+
+  return fallbackMessage;
+}
+
 export interface Session {
   id: string;
   user_id: string;
@@ -71,8 +85,8 @@ export async function createSession(req: CreateSessionRequest): Promise<Session>
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to create session' }));
-    throw new Error(error.detail || 'Failed to create session');
+    const error = await response.json().catch(() => ({}));
+    throw new Error(parseApiError(error, 'Failed to create session'));
   }
 
   return response.json();
@@ -89,8 +103,8 @@ export async function addMessage(sessionId: string, req: MessageRequest): Promis
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to add message' }));
-    throw new Error(error.detail || 'Failed to add message');
+    const error = await response.json().catch(() => ({}));
+    throw new Error(parseApiError(error, 'Failed to add message'));
   }
 }
 
@@ -112,8 +126,8 @@ export async function endSession(sessionId: string): Promise<EndSessionResponse>
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Failed to end session' }));
-      throw new Error(error.detail || 'Failed to end session');
+      const error = await response.json().catch(() => ({}));
+      throw new Error(parseApiError(error, 'Failed to end session'));
     }
 
     return response.json();
@@ -136,8 +150,8 @@ export async function getSession(sessionId: string): Promise<SessionDetail> {
     if (response.status === 404) {
       throw new Error('Session not found');
     }
-    const error = await response.json().catch(() => ({ detail: 'Failed to fetch session' }));
-    throw new Error(error.detail || 'Failed to fetch session');
+    const error = await response.json().catch(() => ({}));
+    throw new Error(parseApiError(error, 'Failed to fetch session'));
   }
 
   return response.json();
@@ -151,8 +165,8 @@ export async function getSessions(userId?: string): Promise<Session[]> {
   const response = await fetch(url);
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Failed to fetch sessions' }));
-    throw new Error(error.detail || 'Failed to fetch sessions');
+    const error = await response.json().catch(() => ({}));
+    throw new Error(parseApiError(error, 'Failed to fetch sessions'));
   }
 
   return response.json();

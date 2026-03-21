@@ -5,12 +5,20 @@ import { Mic, PhoneOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { clsx } from 'clsx';
 import { useRouter } from 'next/navigation';
-import { createSession, addMessage, endSession as endBackendSession } from '@/lib/api';
+import { addMessage, endSession as endBackendSession } from '@/lib/api';
 
 interface VoiceCallUIProps {
   agentId: string;
   personaId: string;
-  sessionId: string;  // Now passed as prop
+  sessionId: string;
+}
+
+export function normalizeMessageRole(messageRole: string): 'advisor' | 'prospect' {
+  if (messageRole === 'user') {
+    return 'advisor';
+  }
+
+  return 'prospect';
 }
 
 export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps) {
@@ -22,9 +30,6 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
   const [error, setError] = useState<string | null>(null);
 
   const turnCounterRef = useRef(0);
-  const conversationIdRef = useRef<string | null>(null);
-
-  // Log session ID on mount
   useEffect(() => {
     console.log('[VoiceCallUI] Initialized with session ID:', sessionId);
   }, [sessionId]);
@@ -65,15 +70,9 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
       const messageRole = String(message.source || message.role || 'unknown');
 
       // Transform role: 'user' -> 'advisor', 'agent'/'ai' -> 'prospect'
-      let transformedRole: 'advisor' | 'prospect';
-      if (messageRole === 'user') {
-        transformedRole = 'advisor';
-      } else if (messageRole === 'agent' || messageRole === 'ai') {
-        transformedRole = 'prospect';
-      } else {
-        // Handle other possible role values
+      const transformedRole = normalizeMessageRole(messageRole);
+      if (transformedRole === 'prospect' && messageRole !== 'agent' && messageRole !== 'ai') {
         console.warn('[VoiceCallUI] Unknown message role:', messageRole, 'defaulting to prospect');
-        transformedRole = 'prospect';
       }
 
       turnCounterRef.current += 1;

@@ -159,7 +159,7 @@ async def create_session(req: CreateSessionRequest):
             """
             INSERT INTO sessions (user_id, persona_id, conversation_id, started_at, status)
             VALUES ($1, $2, $3, NOW(), 'in_progress')
-            RETURNING id, user_id, persona_id, conversation_id, started_at, status
+            RETURNING id, user_id, persona_id, conversation_id, started_at, ended_at, status
             """,
             req.user_id,
             req.persona_id,
@@ -172,6 +172,7 @@ async def create_session(req: CreateSessionRequest):
             persona_id=row["persona_id"],
             conversation_id=row["conversation_id"],
             started_at=row["started_at"],
+            ended_at=row["ended_at"],
             status=row["status"],
         )
 
@@ -218,6 +219,9 @@ async def end_session(session_id: str):
 
         if not session_row:
             raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
+
+        if session_row["status"] == "completed":
+            raise HTTPException(status_code=409, detail="Session has already been completed")
 
         persona_id = session_row["persona_id"]
         persona = PERSONAS.get(persona_id)
@@ -415,14 +419,15 @@ async def get_session(session_id: str):
             )
 
         return SessionDetail(
-            session=SessionResponse(
-                id=str(session_row["id"]),
-                user_id=session_row["user_id"],
-                persona_id=session_row["persona_id"],
-                conversation_id=session_row["conversation_id"],
-                started_at=session_row["started_at"],
-                status=session_row["status"],
-            ),
+        session=SessionResponse(
+            id=str(session_row["id"]),
+            user_id=session_row["user_id"],
+            persona_id=session_row["persona_id"],
+            conversation_id=session_row["conversation_id"],
+            started_at=session_row["started_at"],
+            ended_at=session_row["ended_at"],
+            status=session_row["status"],
+        ),
             messages=messages,
             scorecard=scorecard,
         )

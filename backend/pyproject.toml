@@ -1,0 +1,23 @@
+[project]
+name = "finance-assistant-backend"
+version = "0.1.0"
+description = "FastAPI backend for the finance assistant voice practice app."
+readme = "../README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic",
+    "asyncpg",
+    "fastapi",
+    "pydantic",
+    "python-dotenv",
+    "requests",
+    "uvicorn",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
+
+[tool.uv]
+package = false

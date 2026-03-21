@@ -1,6 +1,8 @@
 -- PitchIQ Database Schema
 -- PostgreSQL 12+
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- Sessions: One per call
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

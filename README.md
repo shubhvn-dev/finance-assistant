@@ -14,12 +14,15 @@ This project is structured as a monorepo with a decoupled frontend and backend:
 ### Prerequisites
 - Node.js 18+
 - Python 3.10+
-- API Keys (Anthropic, ElevenLabs, Finny, Blaxel)
+- PostgreSQL
+- Anthropic API key
+- ElevenLabs persona agent IDs for the three training personas
 
 ### Setup
 
 1. **Environment Variables**
-   Copy `.env.example` to `.env` in the root and fill in your keys.
+   Copy `.env.example` to `.env` in the root, then fill in the backend values.
+   Add the frontend values to `frontend/.env.local`.
 
 2. **Backend Setup**
    ```bash
@@ -27,7 +30,7 @@ This project is structured as a monorepo with a decoupled frontend and backend:
    python -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
-   uvicorn app.main:app --reload
+   uvicorn main:app --reload
    ```
 
 3. **Frontend Setup**

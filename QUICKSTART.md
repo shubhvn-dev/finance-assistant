@@ -10,6 +10,11 @@ The PostgreSQL database has been set up and is ready to use:
 
 ## Running the Application
 
+### Required Environment
+
+- Backend `.env`: `ANTHROPIC_API_KEY`, `DATABASE_URL`
+- Frontend `frontend/.env.local`: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_AGENT_ID_EASY`, `NEXT_PUBLIC_AGENT_ID_MEDIUM`, `NEXT_PUBLIC_AGENT_ID_AGGRESSIVE`
+
 ### Terminal 1 - Backend API
 
 ```bash
@@ -95,8 +100,8 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ### Scorecard not generating
 - Check backend logs for Claude API errors
-- Verify ANTHROPIC_API_KEY is set correctly
-- Ensure at least 2 message turns were recorded
+- Verify `ANTHROPIC_API_KEY` and `DATABASE_URL` are set correctly
+- Ensure transcript rows were recorded in `messages`
 
 ## Architecture Flow
 
@@ -115,9 +120,9 @@ Frontend: POST /sessions/{id}/end
   ↓
 Backend:
   - Fetches all messages from DB
-  - Calls Claude API with scoring prompt
-  - Saves scorecard to DB
-  - Returns scorecard data
+  - Formats the transcript and calls Claude with the scoring prompt
+  - Flattens the JSON response into `scorecards`
+  - Updates the session status to `completed`
   ↓
 Frontend: Navigate to /session/{id}/scorecard
   ↓

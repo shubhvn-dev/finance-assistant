@@ -16,6 +16,7 @@ class SessionResponse(BaseModel):
     persona_id: str
     conversation_id: Optional[str]
     started_at: datetime
+    ended_at: Optional[datetime] = None
     status: str
 
 
