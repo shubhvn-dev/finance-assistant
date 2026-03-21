@@ -24,6 +24,7 @@ def build_fallback_scorecard() -> dict:
         "biggest_mistake": FALLBACK_MESSAGE,
         "what_to_say_instead": RETRY_MESSAGE,
         "meeting_booked": False,
+        "annotations": [],
     }
 
 

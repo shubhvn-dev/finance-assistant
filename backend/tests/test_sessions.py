@@ -95,6 +95,7 @@ def install_test_client(monkeypatch, connection, *, raise_server_exceptions=True
             "biggest_mistake": "Automatic AI scoring was unavailable for this call.",
             "what_to_say_instead": "Retry scorecard generation after configuring a supported LLM provider.",
             "meeting_booked": False,
+            "annotations": [],
         },
         raising=False,
     )
@@ -122,6 +123,15 @@ TEST_SCORECARD_JSON = json.dumps(
         "biggest_mistake": "Could have closed sooner.",
         "what_to_say_instead": "Can we schedule 15 minutes next week?",
         "meeting_booked": True,
+        "annotations": [
+            {
+                "turn_number": 1,
+                "type": "bad",
+                "label": "Weak opener",
+                "insight": "The opener was too generic.",
+                "rewrite": "I work with families reviewing concentrated positions like yours.",
+            }
+        ],
     }
 )
 
@@ -158,6 +168,20 @@ def test_end_session_persists_scorecard_and_marks_completed(monkeypatch):
     assert body["session_id"] == session_id
     assert body["status"] == "completed"
     assert body["scorecard"]["overall_score"] == 8
+    assert body["scorecard"]["annotations"] == [
+        {
+            "turn_number": 1,
+            "type": "bad",
+            "label": "Weak opener",
+            "insight": "The opener was too generic.",
+            "rewrite": "I work with families reviewing concentrated positions like yours.",
+        }
+    ]
+    insert_query, insert_args = next(
+        (query, args) for query, args in connection.executed if "INSERT INTO scorecards" in query
+    )
+    assert "annotations" in insert_query
+    assert json.loads(insert_args[-1]) == body["scorecard"]["annotations"]
     assert any("INSERT INTO scorecards" in query for query, _ in connection.executed)
     assert any("UPDATE sessions SET status = 'completed'" in query for query, _ in connection.executed)
 
@@ -270,6 +294,7 @@ def test_end_session_generates_fallback_scorecard_when_scoring_fails(monkeypatch
             "biggest_mistake": "Automatic AI scoring was unavailable for this call.",
             "what_to_say_instead": "Retry scorecard generation after configuring a supported LLM provider.",
             "meeting_booked": False,
+            "annotations": [],
         },
         raising=False,
     )
@@ -285,6 +310,7 @@ def test_end_session_generates_fallback_scorecard_when_scoring_fails(monkeypatch
     assert body["status"] == "completed"
     assert body["scorecard"]["overall_score"] == 0
     assert body["scorecard"]["best_moment"] == "Automatic AI scoring was unavailable for this call."
+    assert body["scorecard"]["annotations"] == []
     assert any("INSERT INTO scorecards" in query for query, _ in connection.executed)
     assert any("UPDATE sessions SET status = 'completed'" in query for query, _ in connection.executed)
     assert response.headers["access-control-allow-origin"] == "*"
@@ -326,6 +352,16 @@ def test_get_session_includes_ended_at(monkeypatch):
             "biggest_mistake": "Could have closed sooner.",
             "what_to_say_instead": "Can we schedule 15 minutes next week?",
             "meeting_booked": True,
+            "annotations": json.dumps(
+                [
+                    {
+                        "turn_number": 1,
+                        "type": "good",
+                        "label": "Strong opener",
+                        "insight": "The call started with a clear value statement.",
+                    }
+                ]
+            ),
         },
     )
     client = install_test_client(monkeypatch, connection)
@@ -335,3 +371,11 @@ def test_get_session_includes_ended_at(monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert datetime.fromisoformat(body["session"]["ended_at"].replace("Z", "+00:00")) == ended_at
+    assert body["scorecard"]["annotations"] == [
+        {
+            "turn_number": 1,
+            "type": "good",
+            "label": "Strong opener",
+            "insight": "The call started with a clear value statement.",
+        }
+    ]

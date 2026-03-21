@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -40,6 +40,7 @@ class ScorecardData(BaseModel):
     biggest_mistake: str
     what_to_say_instead: str
     meeting_booked: bool
+    annotations: Optional[list[Any]] = None
 
 
 class EndSessionResponse(BaseModel):

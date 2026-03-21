@@ -70,6 +70,7 @@ def test_build_fallback_scorecard_returns_deterministic_shape():
         "biggest_mistake": "Automatic AI scoring was unavailable for this call.",
         "what_to_say_instead": "Retry scorecard generation after configuring a supported LLM provider.",
         "meeting_booked": False,
+        "annotations": [],
     }
 
 
