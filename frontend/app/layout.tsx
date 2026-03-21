@@ -1,12 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Serif_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const dmSerifDisplay = DM_Serif_Display({
+  weight: '400',
+  subsets: ["latin"],
+  variable: '--font-display',
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: '--font-body',
+});
 
 export const metadata: Metadata = {
-  title: "Finance Assistant",
-  description: "AI Cold Call Trainer",
+  title: "MidtownMoney",
+  description: "AI-Powered Cold Call Training",
 };
 
 export default function RootLayout({
@@ -15,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className={`${dmSerifDisplay.variable} ${dmSans.variable}`}>
+      <body className="bg-cream-50 font-body text-brand-900 antialiased">{children}</body>
     </html>
   );
 }
