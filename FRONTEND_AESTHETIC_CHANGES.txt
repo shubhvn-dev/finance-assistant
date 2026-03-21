@@ -1,0 +1,1453 @@
+================================================================================
+MIDTOWNMONEY FRONTEND AESTHETIC OVERHAUL — COMPLETE FILE CONTENTS
+================================================================================
+
+This document contains the complete replacement contents for all 10 files
+that need to be updated. Copy-paste each file's contents into your main repo.
+
+NO logic changes — only visual/CSS/markup. All existing functionality
+(routing, API calls, ElevenLabs, state management) is preserved.
+
+NO new npm dependencies needed. Fonts load from Google Fonts automatically.
+
+================================================================================
+FILE 1: frontend/tailwind.config.ts
+================================================================================
+
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          50:  '#f0f4ff',
+          100: '#dce4f8',
+          200: '#b8c9f0',
+          300: '#8ba8e8',
+          400: '#5e87df',
+          500: '#3a6bd6',
+          600: '#2952b0',
+          700: '#1e3d8a',
+          800: '#142a64',
+          900: '#0c1a3e',
+        },
+        cream: {
+          50:  '#fefdfb',
+          100: '#faf8f5',
+          200: '#f0ece6',
+        },
+        score: {
+          green:  '#16a34a',
+          yellow: '#ca8a04',
+          red:    '#dc2626',
+        },
+      },
+      fontFamily: {
+        display: ['var(--font-display)', 'Georgia', 'serif'],
+        body:    ['var(--font-body)', 'sans-serif'],
+      },
+      animation: {
+        'fade-up': 'fade-up 0.6s ease-out forwards',
+        'bar-fill': 'bar-fill 1s ease-out 0.3s forwards',
+        'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
+        'float': 'float 3s ease-in-out infinite',
+      },
+      keyframes: {
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(20px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'bar-fill': {
+          from: { width: '0' },
+          to: { width: 'var(--bar-width)' },
+        },
+        'pulse-soft': {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(58,107,214,0.2)' },
+          '50%': { boxShadow: '0 0 0 12px rgba(58,107,214,0)' },
+        },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-6px)' },
+        },
+      },
+    },
+  },
+  plugins: [],
+};
+export default config;
+
+
+================================================================================
+FILE 2: frontend/app/globals.css
+================================================================================
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-brand-500: #3a6bd6;
+    --color-brand-600: #2952b0;
+    --color-cream-50: #fefdfb;
+  }
+  html {
+    background-color: #fefdfb;
+  }
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .hero-gradient {
+    background: linear-gradient(180deg, #dce4f8 0%, #f0f4ff 40%, #fefdfb 100%);
+  }
+
+  .glass-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #f0ece6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  }
+
+  .float-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #f0ece6;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    transition: all 0.3s ease;
+  }
+  .float-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    border-color: #b8c9f0;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2rem;
+    background-color: #3a6bd6;
+    color: white;
+    border-radius: 9999px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .btn-primary:hover {
+    background-color: #2952b0;
+    box-shadow: 0 4px 20px rgba(58,107,214,0.3);
+  }
+
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2rem;
+    background: transparent;
+    color: #3a6bd6;
+    border: 1.5px solid #3a6bd6;
+    border-radius: 9999px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .btn-outline:hover {
+    background-color: #f0f4ff;
+    border-color: #2952b0;
+    color: #2952b0;
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #3a6bd6, #8ba8e8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stagger-children > * {
+    opacity: 0;
+    animation: fade-up 0.6s ease-out forwards;
+  }
+  .stagger-children > *:nth-child(1) { animation-delay: 0s; }
+  .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+  .stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+  .stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+  .stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+
+  .score-bar-fill {
+    animation: bar-fill 1s ease-out 0.3s forwards;
+    width: 0;
+  }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bar-fill {
+  from { width: 0; }
+  to { width: var(--bar-width); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(58,107,214,0.2); }
+  50% { box-shadow: 0 0 0 12px rgba(58,107,214,0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+
+================================================================================
+FILE 3: frontend/app/layout.tsx
+================================================================================
+
+import type { Metadata } from "next";
+import { DM_Serif_Display, DM_Sans } from "next/font/google";
+import "./globals.css";
+
+const dmSerifDisplay = DM_Serif_Display({
+  weight: '400',
+  subsets: ["latin"],
+  variable: '--font-display',
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: '--font-body',
+});
+
+export const metadata: Metadata = {
+  title: "MidtownMoney",
+  description: "AI-Powered Cold Call Training",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" className={`${dmSerifDisplay.variable} ${dmSans.variable}`}>
+      <body className="bg-cream-50 font-body text-brand-900 antialiased">{children}</body>
+    </html>
+  );
+}
+
+
+================================================================================
+FILE 4: frontend/app/page.tsx  (FULL REDESIGN — landing page with nav + hero + features)
+================================================================================
+
+import Link from 'next/link';
+import { Phone, BarChart3, Users, ArrowRight, History } from 'lucide-react';
+
+export default function Home() {
+  return (
+    <main className="min-h-screen bg-cream-50">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-cream-50/80 backdrop-blur-md border-b border-cream-200">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="font-display text-2xl text-brand-900">
+            MidtownMoney
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/call-logs"
+              className="text-sm font-medium text-brand-400 hover:text-brand-700 transition-colors"
+            >
+              Call Logs
+            </Link>
+            <Link
+              href="/session/new"
+              className="btn-primary text-sm"
+            >
+              Try Demo
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="hero-gradient pt-32 pb-24 px-6">
+        <div className="max-w-4xl mx-auto text-center stagger-children">
+          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl text-brand-900 leading-tight mb-6">
+            Master Your Cold Calls.{' '}
+            <span className="text-gradient">Close More Deals.</span>
+          </h1>
+          <p className="text-lg md:text-xl text-brand-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Practice with AI-powered personas. Get instant feedback and personalized scorecards to sharpen your pitch.
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <Link href="/session/new" className="btn-primary text-base px-8 py-4">
+              Try Demo
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link href="/call-logs" className="btn-outline text-base px-8 py-4">
+              <History className="w-5 h-5" />
+              View Call Logs
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-24 px-6 bg-cream-50">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="font-display text-3xl md:text-4xl text-brand-900 mb-4">How It Works</h2>
+            <p className="text-brand-400 text-lg">Three steps to becoming a better closer</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 stagger-children">
+            {/* Feature 1 */}
+            <div className="float-card p-8 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-brand-50 flex items-center justify-center mx-auto mb-5">
+                <Users className="w-7 h-7 text-brand-500" />
+              </div>
+              <h3 className="font-display text-xl text-brand-900 mb-3">Choose a Persona</h3>
+              <p className="text-brand-400 text-sm leading-relaxed">
+                Select from easy, medium, or aggressive AI personas to match your skill level.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="float-card p-8 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-brand-50 flex items-center justify-center mx-auto mb-5">
+                <Phone className="w-7 h-7 text-brand-500" />
+              </div>
+              <h3 className="font-display text-xl text-brand-900 mb-3">Practice Live</h3>
+              <p className="text-brand-400 text-sm leading-relaxed">
+                Have a real-time voice conversation with your AI prospect. Just like a real cold call.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="float-card p-8 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-brand-50 flex items-center justify-center mx-auto mb-5">
+                <BarChart3 className="w-7 h-7 text-brand-500" />
+              </div>
+              <h3 className="font-display text-xl text-brand-900 mb-3">Get Your Score</h3>
+              <p className="text-brand-400 text-sm leading-relaxed">
+                Receive an instant scorecard with detailed feedback on your opener, objections, tone, and close.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+
+================================================================================
+FILE 5: frontend/app/session/new/page.tsx
+================================================================================
+
+import Link from 'next/link';
+import { PERSONAS } from '@/lib/personas';
+import { ArrowLeft, User, TrendingUp, Flame } from 'lucide-react';
+import { clsx } from 'clsx';
+
+export default function NewSessionPage() {
+  const getDifficultyIcon = (difficulty: string) => {
+    if (difficulty === 'Easy') return User;
+    if (difficulty === 'Medium') return TrendingUp;
+    return Flame;
+  };
+
+  return (
+    <main className="min-h-screen bg-cream-50 p-8">
+      <div className="max-w-5xl mx-auto">
+        <Link href="/" className="inline-flex items-center text-brand-400 hover:text-brand-700 mb-8 transition-colors">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Home
+        </Link>
+
+        <div className="text-center mb-12">
+          <h1 className="font-display text-4xl text-brand-900 mb-3">Choose Your Persona</h1>
+          <p className="text-brand-400 text-lg">Select a difficulty level to start your practice session</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 stagger-children">
+          {PERSONAS.map((persona) => {
+            const Icon = getDifficultyIcon(persona.difficulty);
+            return (
+              <Link
+                key={persona.id}
+                href={`/session/${persona.id}`}
+                className="block group"
+              >
+                <div className={clsx(
+                  "h-full bg-white p-8 rounded-2xl shadow-md border border-cream-200 transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+                  persona.difficulty === 'Easy' && "border-l-4 border-l-green-500 hover:border-brand-300",
+                  persona.difficulty === 'Medium' && "border-l-4 border-l-amber-500 hover:border-brand-300",
+                  persona.difficulty === 'Aggressive' && "border-l-4 border-l-red-500 hover:border-brand-300",
+                )}>
+                  {/* Icon at top */}
+                  <div className={clsx(
+                    "w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110",
+                    persona.difficulty === 'Easy' && "bg-green-50",
+                    persona.difficulty === 'Medium' && "bg-amber-50",
+                    persona.difficulty === 'Aggressive' && "bg-red-50",
+                  )}>
+                    <Icon className={clsx(
+                      "w-8 h-8",
+                      persona.difficulty === 'Easy' && "text-green-600",
+                      persona.difficulty === 'Medium' && "text-amber-600",
+                      persona.difficulty === 'Aggressive' && "text-red-600",
+                    )} />
+                  </div>
+
+                  {/* Name */}
+                  <h3 className="font-display text-2xl text-brand-900 mb-2 group-hover:text-brand-500 transition-colors">
+                    {persona.name}
+                  </h3>
+
+                  {/* Difficulty badge */}
+                  <div className="mb-4">
+                    <span className={clsx(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border",
+                      persona.difficulty === 'Easy' && "bg-green-50 text-green-700 border-green-200",
+                      persona.difficulty === 'Medium' && "bg-amber-50 text-amber-700 border-amber-200",
+                      persona.difficulty === 'Aggressive' && "bg-red-50 text-red-700 border-red-200",
+                    )}>
+                      {persona.difficulty} Level
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-brand-400 text-sm leading-relaxed">
+                    {persona.description}
+                  </p>
+
+                  {/* Hover indicator */}
+                  <div className="mt-6 flex items-center text-brand-500 font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    Start Session
+                    <ArrowLeft className="w-4 h-4 ml-1 rotate-180" />
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+
+================================================================================
+FILE 6: frontend/app/session/[id]/page.tsx
+================================================================================
+
+'use client';
+
+import { PERSONAS } from '@/lib/personas';
+import { VoiceCallUI } from '@/components/VoiceCallUI';
+import { notFound, useParams } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { createSession } from '@/lib/api';
+
+const PERSONA_ID_MAP: Record<string, string> = {
+  easy: 'marcus',
+  medium: 'sarah',
+  aggressive: 'robert',
+};
+
+export function getBackendPersonaId(personaId: string): string {
+  return PERSONA_ID_MAP[personaId] || 'marcus';
+}
+
+export default function SessionPage() {
+  const params = useParams();
+  const id = params?.id as string;
+  const persona = PERSONAS.find((p) => p.id === id);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isCreatingSession, setIsCreatingSession] = useState(true);
+  const backendPersonaId = getBackendPersonaId(id);
+
+  // Create session on page load
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        console.log('[SessionPage] Creating session for persona:', backendPersonaId);
+        const session = await createSession({
+          user_id: 'temp-user-001',
+          persona_id: backendPersonaId,
+        });
+        setSessionId(session.id);
+        console.log('[SessionPage] Session created:', session.id);
+      } catch (err) {
+        console.error('[SessionPage] Failed to create session:', err);
+      } finally {
+        setIsCreatingSession(false);
+      }
+    };
+
+    initSession();
+  }, [backendPersonaId]);
+
+  if (!persona) {
+    notFound();
+  }
+
+  return (
+    <main className="min-h-screen bg-cream-50 p-8 flex flex-col">
+      <div className="max-w-4xl mx-auto w-full">
+        <Link href="/session/new" className="inline-flex items-center text-brand-400 hover:text-brand-700 mb-8 transition-colors">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Change Persona
+        </Link>
+
+        <div className="text-center mb-12">
+          <h1 className="font-display text-3xl text-brand-900 mb-2">Practice with <span className="text-brand-600">{persona.name}</span></h1>
+          <p className="text-brand-400">{persona.description}</p>
+        </div>
+
+        {isCreatingSession ? (
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-cream-200">
+            <div className="w-12 h-12 rounded-full border-4 border-brand-200 border-t-brand-500 animate-spin mb-4" />
+            <p className="text-brand-400">Preparing session...</p>
+          </div>
+        ) : sessionId ? (
+          <VoiceCallUI agentId={persona.agentId} personaId={backendPersonaId} sessionId={sessionId} />
+        ) : (
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-red-50 rounded-2xl border border-red-200">
+            <p className="text-red-600">Failed to create session. Please refresh the page.</p>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+
+================================================================================
+FILE 7: frontend/components/VoiceCallUI.tsx
+================================================================================
+
+'use client';
+
+import { useConversation } from '@elevenlabs/react';
+import { Mic, PhoneOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { clsx } from 'clsx';
+import { useRouter } from 'next/navigation';
+import { addMessage, endSession as endBackendSession } from '@/lib/api';
+
+interface VoiceCallUIProps {
+  agentId: string;
+  personaId: string;
+  sessionId: string;
+}
+
+export function normalizeMessageRole(messageRole: string): 'advisor' | 'prospect' {
+  if (messageRole === 'user') {
+    return 'advisor';
+  }
+
+  return 'prospect';
+}
+
+export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps) {
+  const router = useRouter();
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
+  const [configError, setConfigError] = useState<boolean>(false);
+  const [isGeneratingScorecard, setIsGeneratingScorecard] = useState(false);
+  const [scorecardReady, setScorecardReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const turnCounterRef = useRef(0);
+  useEffect(() => {
+    console.log('[VoiceCallUI] Initialized with session ID:', sessionId);
+  }, [sessionId]);
+
+  // Check for valid configuration on mount
+  useEffect(() => {
+    console.log(`[VoiceCallUI] Initializing with Agent ID: ${agentId}`);
+
+    if (!agentId || agentId.includes('placeholder')) {
+      console.error('[VoiceCallUI] Error: Agent ID is not configured or is a placeholder.');
+      setConfigError(true);
+    } else {
+      setConfigError(false);
+    }
+  }, [agentId]);
+
+  const conversation = useConversation({
+    onConnect: () => {
+      console.log('[VoiceCallUI] Connected to ElevenLabs WebSocket');
+      setConnectionStatus('connected');
+      setError(null);
+    },
+    onDisconnect: () => {
+      console.log('[VoiceCallUI] Disconnected from ElevenLabs WebSocket');
+      setConnectionStatus('disconnected');
+      // Note: Session ending is handled in handleEndCall, not here
+    },
+    onMessage: async (message) => {
+      console.log('[VoiceCallUI] Message received:', message);
+
+      if (!sessionId) {
+        console.warn('[VoiceCallUI] No session ID, skipping message save');
+        return;
+      }
+
+      // Extract message data
+      const messageText = message.message || '';
+      const messageRole = String(message.source || message.role || 'unknown');
+
+      // Transform role: 'user' -> 'advisor', 'agent'/'ai' -> 'prospect'
+      const transformedRole = normalizeMessageRole(messageRole);
+      if (transformedRole === 'prospect' && messageRole !== 'agent' && messageRole !== 'ai') {
+        console.warn('[VoiceCallUI] Unknown message role:', messageRole, 'defaulting to prospect');
+      }
+
+      turnCounterRef.current += 1;
+
+      // Fire-and-forget message save
+      addMessage(sessionId, {
+        role: transformedRole,
+        content: messageText,
+        turn_number: turnCounterRef.current,
+      }).catch((err) => {
+        console.error('[VoiceCallUI] Failed to save message:', err);
+      });
+    },
+    onError: (error) => {
+      console.error('[VoiceCallUI] WebSocket Error:', error);
+      setConnectionStatus('disconnected');
+      setError('Connection error occurred');
+    },
+  });
+
+  const { startSession, endSession, isSpeaking } = conversation;
+
+  const handleStartCall = useCallback(async () => {
+    if (configError) return;
+
+    setConnectionStatus('connecting');
+    setError(null);
+    turnCounterRef.current = 0;
+
+    try {
+      console.log('[VoiceCallUI] Starting call with session:', sessionId);
+      // @ts-ignore - connectionType is required by the SDK
+      await startSession({ agentId, connectionType: 'websocket' });
+      console.log('[VoiceCallUI] Call started, ready to receive messages');
+    } catch (error) {
+      console.error('[VoiceCallUI] Failed to start session:', error);
+      setError(`Failed to start: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setConnectionStatus('disconnected');
+    }
+  }, [startSession, agentId, configError, sessionId]);
+
+  const handleEndCall = useCallback(async () => {
+    console.log('[VoiceCallUI] handleEndCall - Starting to end call');
+    console.log('[VoiceCallUI] Current sessionId:', sessionId);
+
+    // End the ElevenLabs session
+    await endSession();
+
+    // Manually trigger scorecard generation if we have a session
+    if (sessionId && !isGeneratingScorecard) {
+      console.log('[VoiceCallUI] Manually triggering scorecard generation');
+      setIsGeneratingScorecard(true);
+      setError(null);
+
+      try {
+        console.log('[VoiceCallUI] Calling endBackendSession for:', sessionId);
+        console.log('[VoiceCallUI] This may take 5-10 seconds...');
+
+        const result = await endBackendSession(sessionId);
+
+        console.log('[VoiceCallUI] Scorecard generated successfully:', result);
+        setIsGeneratingScorecard(false);
+        setScorecardReady(true);
+      } catch (err) {
+        console.error('[VoiceCallUI] Failed to generate scorecard:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(`Failed to generate scorecard: ${errorMessage}. You can still view the transcript at /session/${sessionId}/scorecard`);
+        setIsGeneratingScorecard(false);
+
+        // Still allow viewing the report even if scorecard generation failed
+        setTimeout(() => {
+          setScorecardReady(true);
+        }, 3000);
+      }
+    }
+  }, [endSession, sessionId, isGeneratingScorecard]);
+
+  if (configError) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-red-50 rounded-2xl border border-red-200">
+        <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+        <h3 className="font-display text-lg text-red-800 mb-2">Configuration Error</h3>
+        <p className="text-red-600 text-center">Temporarily unavailable. Please try later.</p>
+        <p className="text-xs text-red-400 mt-4 font-mono">Missing Agent ID</p>
+      </div>
+    );
+  }
+
+  if (isGeneratingScorecard) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-brand-50 rounded-2xl border border-brand-100">
+        <div className="w-16 h-16 rounded-full border-4 border-brand-200 border-t-brand-500 animate-spin mb-4" />
+        <h3 className="font-display text-lg text-brand-900 mb-2">Generating Scorecard</h3>
+        <p className="text-brand-500 text-center">Analyzing your call performance...</p>
+      </div>
+    );
+  }
+
+  if (scorecardReady && sessionId) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-green-50 rounded-2xl border border-green-200 shadow-lg">
+        <CheckCircle className="w-16 h-16 text-green-600 mb-4" />
+        <h3 className="font-display text-2xl text-green-900 mb-2">Call Complete!</h3>
+        <p className="text-green-700 text-center mb-6">Your performance report is ready to view.</p>
+
+        <button
+          onClick={() => router.push(`/session/${sessionId}/scorecard`)}
+          className="btn-primary text-lg px-8 py-4"
+        >
+          View Report
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-cream-200">
+      {error && (
+        <div className="mb-4 w-full p-3 bg-red-50 border border-red-200 rounded-xl">
+          <p className="text-red-600 text-sm text-center">{error}</p>
+        </div>
+      )}
+
+      <div className="mb-8 flex flex-col items-center">
+        <div className={clsx(
+          "w-28 h-28 rounded-full flex items-center justify-center mb-4 transition-all duration-500",
+          connectionStatus === 'connected' ? "bg-brand-50" : "bg-cream-100",
+          connectionStatus === 'connected' && "animate-pulse-soft",
+          isSpeaking && "scale-110 bg-brand-100"
+        )}>
+          <div className={clsx(
+            "w-5 h-5 rounded-full transition-colors duration-300",
+            connectionStatus === 'connected' ? "bg-brand-500" : "bg-brand-200",
+            isSpeaking && "bg-brand-600"
+          )} />
+        </div>
+        <p className="font-display text-lg text-brand-900">
+          {connectionStatus === 'disconnected' && 'Ready to Call'}
+          {connectionStatus === 'connecting' && 'Connecting...'}
+          {connectionStatus === 'connected' && (isSpeaking ? 'Speaking...' : 'Listening...')}
+        </p>
+        {sessionId && connectionStatus === 'connected' && (
+          <p className="text-xs font-mono text-brand-300 mt-2">Session: {sessionId.slice(0, 8)}...</p>
+        )}
+        {sessionId && connectionStatus === 'disconnected' && !scorecardReady && !isGeneratingScorecard && (
+          <p className="text-xs text-brand-300 mt-2">Session ended - Click End Call to generate report</p>
+        )}
+      </div>
+
+      <div className="flex gap-4">
+        {connectionStatus === 'disconnected' ? (
+          <button
+            onClick={handleStartCall}
+            className="btn-primary"
+          >
+            <Mic className="w-5 h-5" />
+            Start Call
+          </button>
+        ) : (
+          <button
+            onClick={handleEndCall}
+            className="flex items-center gap-2 px-6 py-3 bg-red-50 border border-red-200 text-red-600 rounded-full font-semibold hover:bg-red-500 hover:text-white hover:border-red-500 transition-all"
+          >
+            <PhoneOff className="w-5 h-5" />
+            End Call
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+================================================================================
+FILE 8: frontend/components/Scorecard.tsx
+================================================================================
+NOTE: This file preserves the existing PerformanceRadar/recharts component
+and annotations. Only CSS classes are changed.
+================================================================================
+
+'use client';
+
+import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import {
+  PolarAngleAxis,
+  PolarGrid,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+} from 'recharts';
+import { Scorecard as ScorecardType } from '@/lib/api';
+
+interface ScorecardProps {
+  scorecard: ScorecardType;
+  personaName?: string;
+}
+
+function getGrade(score: number): { grade: string; color: string } {
+  if (score >= 9) return { grade: 'A', color: 'text-green-600' };
+  if (score >= 7) return { grade: 'B', color: 'text-brand-500' };
+  if (score >= 5) return { grade: 'C', color: 'text-amber-500' };
+  if (score >= 3) return { grade: 'D', color: 'text-orange-500' };
+  return { grade: 'F', color: 'text-red-500' };
+}
+
+function ScoreBar({ label, score, feedback }: { label: string; score: number; feedback: string }) {
+  const percentage = (score / 10) * 100;
+  const barColor = score >= 7 ? 'bg-green-500' : score >= 5 ? 'bg-amber-500' : 'bg-red-500';
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-semibold text-brand-800">{label}</span>
+        <span className="text-sm font-bold text-brand-900">{score}/10</span>
+      </div>
+      <div className="w-full h-2.5 bg-cream-200 rounded-full overflow-hidden mb-2">
+        <div
+          className={`h-full ${barColor} score-bar-fill rounded-full`}
+          style={{ '--bar-width': `${percentage}%` } as React.CSSProperties}
+        />
+      </div>
+      <p className="text-sm text-brand-400">{feedback}</p>
+    </div>
+  );
+}
+
+function getDiscoveryScore(scorecard: ScorecardType): number {
+  return typeof scorecard.discovery_score === 'number'
+    ? scorecard.discovery_score
+    : Math.round(
+        (scorecard.opener_score +
+          scorecard.objection_handling_score +
+          scorecard.tone_confidence_score +
+          scorecard.close_attempt_score) /
+          4,
+      );
+}
+
+function PerformanceRadar({ scorecard }: { scorecard: ScorecardType }) {
+  const data = [
+    { label: 'Opener', score: scorecard.opener_score },
+    { label: 'Objection', score: scorecard.objection_handling_score },
+    { label: 'Tone', score: scorecard.tone_confidence_score },
+    { label: 'Discovery', score: getDiscoveryScore(scorecard) },
+    { label: 'Close', score: scorecard.close_attempt_score },
+  ];
+
+  const statCards = [
+    { label: 'Opener', score: scorecard.opener_score },
+    { label: 'Objection Handling', score: scorecard.objection_handling_score },
+    { label: 'Tone & Confidence', score: scorecard.tone_confidence_score },
+    { label: 'Discovery', score: getDiscoveryScore(scorecard) },
+    { label: 'Close Attempt', score: scorecard.close_attempt_score },
+  ];
+  const isServer = typeof window === 'undefined';
+
+  const chart = (
+    <RadarChart
+      data={data}
+      outerRadius="68%"
+      {...(isServer ? { width: 280, height: 220 } : {})}
+    >
+      <PolarGrid stroke="#b8c9f0" />
+      <PolarAngleAxis
+        dataKey="label"
+        tick={{ fill: '#5e87df', fontSize: 12, fontWeight: 600 }}
+      />
+      <Radar
+        dataKey="score"
+        fill="#3a6bd6"
+        fillOpacity={0.2}
+        stroke="#3a6bd6"
+        strokeWidth={2}
+      />
+    </RadarChart>
+  );
+
+  return (
+    <section className="rounded-2xl border border-cream-200 bg-white p-6 shadow-md">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-400">
+            Five-axis lens
+          </p>
+          <h3 className="font-display text-2xl text-brand-900">Performance Radar</h3>
+          <p className="mt-1 text-sm text-brand-400">
+            A fast read on the five behaviors the coach is scoring.
+          </p>
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-600">
+          Discovery-aware
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
+        <div className="mx-auto h-[240px] w-full max-w-[320px]">
+          {isServer ? chart : <ResponsiveContainer width="100%" height="100%">{chart}</ResponsiveContainer>}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {statCards.map((axis) => (
+            <div
+              key={axis.label}
+              className="rounded-2xl border border-cream-200 bg-cream-100 px-4 py-3"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-400">
+                {axis.label}
+              </p>
+              <p className="mt-1 font-display text-2xl text-brand-900">{axis.score}/10</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function Scorecard({ scorecard, personaName }: ScorecardProps) {
+  const { grade, color } = getGrade(scorecard.overall_score);
+
+  return (
+    <div className="w-full max-w-3xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-lg border border-cream-200 p-8 mb-6">
+        <div className="text-center">
+          <h2 className="font-display text-2xl text-brand-900 mb-2">Call Performance</h2>
+          {personaName && (
+            <p className="text-brand-400 mb-6">Practice session with {personaName}</p>
+          )}
+        </div>
+
+        <div className="mb-8">
+          <PerformanceRadar scorecard={scorecard} />
+        </div>
+
+        <div className="text-center">
+          <div className={`font-display text-8xl ${color} mb-2`}>{grade}</div>
+          <div className="font-display text-2xl text-brand-800">{scorecard.overall_score}/10</div>
+        </div>
+
+        {/* Meeting Booked Status */}
+        <div className="mt-6 flex items-center justify-center">
+          {scorecard.meeting_booked ? (
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-full">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <span className="text-green-700 font-semibold">Meeting Booked</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-4 py-2 bg-cream-100 border border-cream-200 rounded-full">
+              <XCircle className="w-5 h-5 text-brand-300" />
+              <span className="text-brand-500 font-semibold">No Meeting Booked</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Detailed Scores */}
+      <div className="bg-white rounded-2xl shadow-lg border border-cream-200 p-8 mb-6">
+        <h3 className="font-display text-xl text-brand-900 mb-6">Detailed Breakdown</h3>
+
+        <ScoreBar
+          label="Opener"
+          score={scorecard.opener_score}
+          feedback={scorecard.opener_feedback}
+        />
+
+        <ScoreBar
+          label="Objection Handling"
+          score={scorecard.objection_handling_score}
+          feedback={scorecard.objection_handling_feedback}
+        />
+
+        <ScoreBar
+          label="Tone & Confidence"
+          score={scorecard.tone_confidence_score}
+          feedback={scorecard.tone_confidence_feedback}
+        />
+
+        <ScoreBar
+          label="Close Attempt"
+          score={scorecard.close_attempt_score}
+          feedback={scorecard.close_attempt_feedback}
+        />
+
+        <ScoreBar
+          label="Discovery"
+          score={getDiscoveryScore(scorecard)}
+          feedback={scorecard.discovery_feedback ?? 'Discovery feedback unavailable.'}
+        />
+      </div>
+
+      {/* Key Moments */}
+      <div className="grid md:grid-cols-2 gap-6 mb-6">
+        {/* Best Moment */}
+        <div className="bg-white rounded-2xl shadow-md border border-cream-200 border-l-4 border-l-green-500 p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle className="w-6 h-6 text-green-600" />
+            <h3 className="font-display text-lg text-green-900">Best Moment</h3>
+          </div>
+          <p className="text-green-800">{scorecard.best_moment}</p>
+        </div>
+
+        {/* Biggest Mistake */}
+        <div className="bg-white rounded-2xl shadow-md border border-cream-200 border-l-4 border-l-red-500 p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            <h3 className="font-display text-lg text-red-900">Biggest Mistake</h3>
+          </div>
+          <p className="text-red-800 mb-4">{scorecard.biggest_mistake}</p>
+
+          <div className="mt-4 pt-4 border-t border-cream-200">
+            <p className="text-xs font-semibold text-red-600 uppercase mb-2">What to say instead:</p>
+            <p className="text-red-900 font-medium italic">
+              &ldquo;{scorecard.what_to_say_instead}&rdquo;
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+================================================================================
+FILE 9: frontend/app/session/[id]/scorecard/page.tsx
+================================================================================
+NOTE: This preserves the existing annotation/transcript logic.
+================================================================================
+
+import { getSession, Annotation } from '@/lib/api';
+import { Scorecard } from '@/components/Scorecard';
+import Link from 'next/link';
+import { ArrowLeft, Home, TrendingUp, TrendingDown } from 'lucide-react';
+import { notFound } from 'next/navigation';
+
+interface ScorecardPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+// Persona name mapping
+const PERSONA_NAMES: Record<string, string> = {
+  'robert': 'Robert Chen',
+  'sarah': 'Sarah Mitchell',
+  'marcus': 'Marcus Johnson',
+};
+
+export default async function ScorecardPage({ params }: ScorecardPageProps) {
+  const { id } = await params;
+
+  let sessionDetail;
+
+  try {
+    sessionDetail = await getSession(id);
+  } catch (error) {
+    console.error('Failed to fetch session:', error);
+    notFound();
+  }
+
+  const { session, messages, scorecard } = sessionDetail;
+
+  const personaName = PERSONA_NAMES[session.persona_id] || session.persona_id;
+  const annotationMap = new Map<number, Annotation>(
+    (scorecard?.annotations ?? []).map((annotation: Annotation) => [annotation.turn_number, annotation]),
+  );
+
+  return (
+    <main className="min-h-screen bg-cream-50 p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Navigation */}
+        <div className="flex items-center justify-between mb-8">
+          <Link
+            href="/session/new"
+            className="inline-flex items-center text-brand-400 hover:text-brand-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            New Session
+          </Link>
+
+          <Link
+            href="/"
+            className="inline-flex items-center text-brand-400 hover:text-brand-700 transition-colors"
+          >
+            <Home className="w-4 h-4 mr-2" />
+            Home
+          </Link>
+        </div>
+
+        {/* Scorecard */}
+        {scorecard ? (
+          <Scorecard scorecard={scorecard} personaName={personaName} />
+        ) : (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
+            <h1 className="font-display text-2xl text-amber-900 mb-4">Scorecard Not Available</h1>
+            <p className="text-amber-700">
+              This session has not been scored yet. Please complete the call first.
+            </p>
+          </div>
+        )}
+
+        {/* Annotated Transcript */}
+        <div className="bg-white rounded-2xl shadow-lg border border-cream-200 p-8 mt-6">
+          <h3 className="font-display text-xl text-brand-900 mb-2">Call Transcript</h3>
+          {scorecard?.annotations && scorecard.annotations.length > 0 && (
+            <p className="text-sm text-brand-400 mb-6">
+              Annotated — {scorecard.annotations.length} coaching moment{scorecard.annotations.length !== 1 ? 's' : ''} highlighted
+            </p>
+          )}
+          {!scorecard?.annotations && <div className="mb-6" />}
+
+          {messages.length === 0 ? (
+            <p className="text-brand-400 text-center py-8">No messages recorded.</p>
+          ) : (
+            <div className="space-y-3">
+              {messages.map((message: import('@/lib/api').Message) => {
+                const annotation =
+                  message.role === 'advisor' ? annotationMap.get(message.turn_number) : undefined;
+                const isGood = annotation?.type === 'good';
+                const isBad = annotation?.type === 'bad';
+                const calloutClasses = isGood
+                  ? 'bg-green-50 border-green-200'
+                  : isBad
+                    ? 'bg-red-50 border-red-200'
+                    : message.role === 'advisor'
+                      ? 'bg-brand-50 border-brand-100'
+                      : 'bg-cream-100 border-cream-200';
+
+                return (
+                  <div key={message.id}>
+                    <div className={`rounded-lg border p-4 ${calloutClasses}`}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span
+                          className={`text-xs font-semibold uppercase ${
+                            isBad
+                              ? 'text-red-700'
+                              : isGood
+                                ? 'text-green-700'
+                                : message.role === 'advisor'
+                                  ? 'text-brand-600'
+                                  : 'text-brand-400'
+                          }`}
+                        >
+                          {message.role === 'advisor' ? 'You' : personaName}
+                        </span>
+                        <span className="text-xs text-brand-300">Turn {message.turn_number}</span>
+                        {annotation && (
+                          <span
+                            className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                              isGood ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {isGood ? (
+                              <TrendingUp className="h-3 w-3" />
+                            ) : (
+                              <TrendingDown className="h-3 w-3" />
+                            )}
+                            {annotation.label}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-brand-800">{message.content}</p>
+                    </div>
+
+                    {annotation && (
+                      <div
+                        className={`mx-4 border-l-2 px-4 py-3 ${
+                          isGood
+                            ? 'border-green-500 bg-green-50 text-green-900'
+                            : 'border-red-500 bg-red-50 text-red-900'
+                        }`}
+                      >
+                        <p className="text-sm">{annotation.insight}</p>
+                        {annotation.rewrite && (
+                          <p className="mt-2 text-sm italic text-green-700">
+                            Try instead: {annotation.rewrite}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="mt-8 flex justify-center gap-4">
+          <Link
+            href="/session/new"
+            className="btn-primary"
+          >
+            Practice Again
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+
+================================================================================
+FILE 10: frontend/app/call-logs/page.tsx
+================================================================================
+
+'use client';
+
+import { useEffect, useState } from 'react';
+import { getSessions, Session } from '@/lib/api';
+import Link from 'next/link';
+import { ArrowLeft, FileText, Clock, User } from 'lucide-react';
+
+// Persona name mapping
+const PERSONA_NAMES: Record<string, string> = {
+  'robert': 'Robert Chen (Hard)',
+  'sarah': 'Sarah Mitchell (Medium)',
+  'marcus': 'Marcus Johnson (Easy)',
+};
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function getDuration(startedAt: string, endedAt?: string): string {
+  if (!endedAt) return 'In progress';
+
+  const start = new Date(startedAt);
+  const end = new Date(endedAt);
+  const diffMs = end.getTime() - start.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffSecs = Math.floor((diffMs % 60000) / 1000);
+
+  if (diffMins > 0) {
+    return `${diffMins}m ${diffSecs}s`;
+  }
+  return `${diffSecs}s`;
+}
+
+export default function CallLogsPage() {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const data = await getSessions('temp-user-001');
+        setSessions(data);
+      } catch (err) {
+        console.error('Failed to fetch sessions:', err);
+        setError('Failed to load call history');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSessions();
+  }, []);
+
+  return (
+    <main className="min-h-screen bg-cream-50 p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <Link
+              href="/"
+              className="inline-flex items-center text-brand-400 hover:text-brand-700 transition-colors mb-4"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Link>
+            <h1 className="font-display text-3xl text-brand-900">Call Logs</h1>
+            <p className="text-brand-400 mt-2">Review your practice sessions and performance</p>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="bg-white rounded-2xl shadow-sm border border-cream-200 p-12 text-center">
+            <div className="w-12 h-12 rounded-full border-4 border-brand-200 border-t-brand-500 animate-spin mx-auto mb-4" />
+            <p className="text-brand-400">Loading call history...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 rounded-2xl border border-red-200 p-6 text-center">
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !error && sessions.length === 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-cream-200 p-12 text-center">
+            <FileText className="w-16 h-16 text-brand-200 mx-auto mb-4" />
+            <h3 className="font-display text-xl text-brand-900 mb-2">No calls yet</h3>
+            <p className="text-brand-400 mb-6">Start your first practice session to see it here</p>
+            <Link
+              href="/session/new"
+              className="btn-primary"
+            >
+              Start Practice
+            </Link>
+          </div>
+        )}
+
+        {/* Table */}
+        {!isLoading && !error && sessions.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-cream-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-cream-100 border-b border-cream-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-brand-400 uppercase tracking-wider">
+                      Date & Time
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-brand-400 uppercase tracking-wider">
+                      Persona
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-brand-400 uppercase tracking-wider">
+                      Duration
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-brand-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-brand-400 uppercase tracking-wider">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-cream-200">
+                  {sessions.map((session) => (
+                    <tr
+                      key={session.id}
+                      className="hover:bg-brand-50 transition-colors cursor-pointer"
+                      onClick={() => window.location.href = `/session/${session.id}/scorecard`}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Clock className="w-4 h-4 text-brand-300 mr-2" />
+                          <span className="text-sm text-brand-800">
+                            {formatDate(session.started_at)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <User className="w-4 h-4 text-brand-300 mr-2" />
+                          <span className="text-sm text-brand-800">
+                            {PERSONA_NAMES[session.persona_id] || session.persona_id}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-brand-500">
+                          {getDuration(session.started_at, session.ended_at)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            session.status === 'completed'
+                              ? 'bg-green-50 text-green-700'
+                              : session.status === 'in_progress'
+                              ? 'bg-amber-50 text-amber-700'
+                              : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          {session.status === 'completed' ? 'Completed' :
+                           session.status === 'in_progress' ? 'In Progress' :
+                           'Abandoned'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <Link
+                          href={`/session/${session.id}/scorecard`}
+                          className="inline-flex items-center gap-1 text-sm font-medium text-brand-500 hover:text-brand-700"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          View Report
+                          <FileText className="w-4 h-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+
+================================================================================
+SUMMARY OF CHANGES
+================================================================================
+
+THEME:
+- Light mode, editorial aesthetic
+- Branding: "MidtownMoney"
+- Fonts: DM Serif Display (headlines) + DM Sans (body) from Google Fonts
+- Colors: brand blue palette (50-900), cream warm whites (50-200)
+- All slate-* colors replaced with brand-* or cream-*
+
+LANDING PAGE (page.tsx):
+- Complete redesign with fixed nav bar, hero gradient section, "Try Demo" CTA
+- 3 feature cards ("Choose a Persona", "Practice Live", "Get Your Score")
+- New icons: BarChart3, Users, ArrowRight, History
+
+ANIMATIONS:
+- .stagger-children: fade-up with staggered delays on page load
+- .score-bar-fill: animated bar width from 0 to final value
+- .float-card: hover lift with shadow increase
+- .hero-gradient: soft blue-to-cream gradient
+- .text-gradient: blue gradient text for accent words
+- .btn-primary / .btn-outline: button styles with hover effects
+
+ALL EXISTING LOGIC PRESERVED:
+- ElevenLabs voice integration unchanged
+- API calls unchanged
+- State management unchanged
+- Routing unchanged
+- TypeScript types unchanged
+- Annotations and PerformanceRadar components preserved
