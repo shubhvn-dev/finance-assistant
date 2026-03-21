@@ -22,11 +22,65 @@ from app.models.session import (
     SessionDetail,
 )
 from personas import PERSONAS
-from prompts import get_persona_prompt, SCORING_PROMPT
+from prompts import get_persona_prompt, SIGNAL_EXTRACTION_PROMPT, SCORING_PROMPT
 
 load_dotenv()
 
+# ── AI configuration ──────────────────────────────────────────────────────────
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+CURRENT_PROMPT_VERSION = "v2.0"
 
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+gemini = genai.GenerativeModel(model_name=GEMINI_MODEL)
+
+
+# ── Two-stage scoring pipeline ────────────────────────────────────────────────
+def generate_scorecard(transcript_text: str, persona: dict) -> dict:
+    """Stage 1: extract behavioral signals. Stage 2: persona-aware scoring."""
+    persona_description = (
+        f"{persona['name']} — {persona['age']}-year-old {persona['occupation']}, "
+        f"{persona['portfolio_value']} portfolio at {persona['current_provider']}"
+    )
+
+    # Stage 1 — signal extraction
+    try:
+        signal_response = gemini.generate_content(
+            SIGNAL_EXTRACTION_PROMPT.format(transcript=transcript_text),
+            generation_config=genai.GenerationConfig(response_mime_type="application/json"),
+        )
+        signals = json.loads(signal_response.text)
+    except Exception as e:
+        print(f"[WARN] Signal extraction failed: {e}. Proceeding with empty signals.")
+        signals = {}
+
+    # Stage 2 — persona-aware scoring
+    score_prompt = SCORING_PROMPT.format(
+        persona_description=persona_description,
+        difficulty=persona["difficulty"],
+        main_objection=persona["main_objection"],
+        scoring_weights=json.dumps(persona.get("scoring_weights", {})),
+        signals=json.dumps(signals, indent=2),
+        transcript=transcript_text,
+    )
+    score_response = gemini.generate_content(
+        score_prompt,
+        generation_config=genai.GenerationConfig(response_mime_type="application/json"),
+    )
+
+    raw = score_response.text.strip()
+    if raw.startswith("```"):
+        lines = raw.split("\n")
+        raw = "\n".join(lines[1:])
+        raw = raw.rsplit("```", 1)[0].strip()
+
+    scorecard = json.loads(raw)
+    scorecard["signals"] = signals
+    scorecard["prompt_version"] = CURRENT_PROMPT_VERSION
+    scorecard["model_version"] = GEMINI_MODEL
+    return scorecard
+
+
+# ── App setup ─────────────────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage database connection lifecycle."""
@@ -44,8 +98,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 
 class RespondRequest(BaseModel):
@@ -91,22 +143,21 @@ def respond(req: RespondRequest):
         messages.append({"role": role, "parts": [entry["content"]]})
 
     model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
+        model_name=GEMINI_MODEL,
         system_instruction=system_prompt,
     )
     response = model.generate_content(messages)
 
-    reply = response.text
-
     return {
         "persona_id": req.persona_id,
         "turn_number": req.turn_number,
-        "response": reply,
+        "response": response.text,
     }
 
 
 @app.post("/score")
 def score(req: ScoreRequest):
+    """Legacy scoring endpoint — uses the two-stage pipeline."""
     persona = PERSONAS.get(req.persona_id)
     if not persona:
         raise HTTPException(status_code=404, detail=f"Persona '{req.persona_id}' not found")
@@ -116,34 +167,12 @@ def score(req: ScoreRequest):
         label = "Advisor" if entry["role"] == "advisor" else persona["name"]
         transcript_text += f"{label}: {entry['content']}\n"
 
-    scoring_message = f"""Prospect persona: {persona['name']} — {persona['age']}-year-old {persona['occupation']}, {persona['portfolio_value']} portfolio at {persona['current_provider']}, difficulty: {persona['difficulty']}.
-
-Transcript:
-{transcript_text}
-
-Score this call now."""
-
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        system_instruction=SCORING_PROMPT,
-    )
-    response = model.generate_content(scoring_message)
-
-    raw = response.text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[1]
-        raw = raw.rsplit("```", 1)[0].strip()
-
     try:
-        scorecard = json.loads(raw)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Failed to parse scorecard JSON from Claude")
+        scorecard = generate_scorecard(transcript_text, persona)
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse scorecard JSON: {str(e)}")
 
-    return {
-        "persona_id": req.persona_id,
-        "user_id": req.user_id,
-        "scorecard": scorecard,
-    }
+    return {"persona_id": req.persona_id, "user_id": req.user_id, "scorecard": scorecard}
 
 
 @app.post("/sessions", response_model=SessionResponse)
@@ -182,7 +211,6 @@ async def add_message(session_id: str, req: MessageRequest):
         raise HTTPException(status_code=400, detail="Role must be 'advisor' or 'prospect'")
 
     async with get_db_connection() as conn:
-        # Verify session exists
         session_exists = await conn.fetchval(
             "SELECT EXISTS(SELECT 1 FROM sessions WHERE id = $1)",
             session_id,
@@ -207,11 +235,10 @@ async def add_message(session_id: str, req: MessageRequest):
 
 @app.post("/sessions/{session_id}/end", response_model=EndSessionResponse)
 async def end_session(session_id: str):
-    """End a session and generate scorecard."""
+    """Mark a session as ended. Scorecard is generated client-side via streaming."""
     async with get_db_connection() as conn:
-        # Fetch session
         session_row = await conn.fetchrow(
-            "SELECT id, user_id, persona_id, started_at, status FROM sessions WHERE id = $1",
+            "SELECT id, status FROM sessions WHERE id = $1",
             session_id,
         )
 
@@ -221,103 +248,6 @@ async def end_session(session_id: str):
         if session_row["status"] == "completed":
             raise HTTPException(status_code=409, detail="Session has already been completed")
 
-        persona_id = session_row["persona_id"]
-        persona = PERSONAS.get(persona_id)
-
-        if not persona:
-            raise HTTPException(status_code=404, detail=f"Persona '{persona_id}' not found")
-
-        # Fetch all messages ordered by turn_number
-        message_rows = await conn.fetch(
-            """
-            SELECT role, content, turn_number
-            FROM messages
-            WHERE session_id = $1
-            ORDER BY turn_number ASC
-            """,
-            session_id,
-        )
-
-        # Format transcript
-        transcript_text = ""
-        for msg in message_rows:
-            label = "Advisor" if msg["role"] == "advisor" else persona["name"]
-            transcript_text += f"{label}: {msg['content']}\n"
-
-        # Generate scorecard using Claude
-        scoring_message = f"""Prospect persona: {persona['name']} — {persona['age']}-year-old {persona['occupation']}, {persona['portfolio_value']} portfolio at {persona['current_provider']}, difficulty: {persona['difficulty']}.
-
-Transcript:
-{transcript_text}
-
-Score this call now."""
-
-        model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
-            system_instruction=SCORING_PROMPT,
-        )
-        response = model.generate_content(scoring_message)
-
-        raw = response.text.strip()
-
-        # Strip markdown code fences if present
-        if raw.startswith("```"):
-            # Handle both ```json and ``` formats
-            lines = raw.split("\n")
-            raw = "\n".join(lines[1:])  # Remove first line with ```
-            raw = raw.rsplit("```", 1)[0].strip()
-
-        try:
-            scorecard_json = json.loads(raw)
-        except json.JSONDecodeError as e:
-            print(f"[ERROR] Failed to parse Claude response. Raw content (first 500 chars):")
-            print(raw[:500])
-            print(f"[ERROR] JSON decode error: {e}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to parse scorecard JSON from Claude. Error: {str(e)}"
-            )
-
-        # Extract nested scores and flatten for database
-        overall_score = scorecard_json.get("overall_score", 0)
-        opener = scorecard_json.get("opener", {})
-        objection_handling = scorecard_json.get("objection_handling", {})
-        tone_and_confidence = scorecard_json.get("tone_and_confidence", {})
-        close_attempt = scorecard_json.get("close_attempt", {})
-        annotations = scorecard_json.get("annotations", [])
-
-        # Insert scorecard
-        await conn.execute(
-            """
-            INSERT INTO scorecards (
-                session_id, overall_score,
-                opener_score, opener_feedback,
-                objection_handling_score, objection_handling_feedback,
-                tone_confidence_score, tone_confidence_feedback,
-                close_attempt_score, close_attempt_feedback,
-                best_moment, biggest_mistake, what_to_say_instead,
-                meeting_booked, annotations, generated_at
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
-            """,
-            session_id,
-            overall_score,
-            opener.get("score", 0),
-            opener.get("feedback", ""),
-            objection_handling.get("score", 0),
-            objection_handling.get("feedback", ""),
-            tone_and_confidence.get("score", 0),
-            tone_and_confidence.get("feedback", ""),
-            close_attempt.get("score", 0),
-            close_attempt.get("feedback", ""),
-            scorecard_json.get("best_moment", ""),
-            scorecard_json.get("biggest_mistake", ""),
-            scorecard_json.get("what_to_say_instead", ""),
-            scorecard_json.get("meeting_booked", False),
-            json.dumps(annotations),
-        )
-
-        # Update session status
         ended_at = datetime.now()
         await conn.execute(
             "UPDATE sessions SET status = 'completed', ended_at = $1 WHERE id = $2",
@@ -329,30 +259,80 @@ Score this call now."""
             session_id=str(session_id),
             status="completed",
             ended_at=ended_at,
-            scorecard=ScorecardData(
-                overall_score=overall_score,
-                opener_score=opener.get("score", 0),
-                opener_feedback=opener.get("feedback", ""),
-                objection_handling_score=objection_handling.get("score", 0),
-                objection_handling_feedback=objection_handling.get("feedback", ""),
-                tone_confidence_score=tone_and_confidence.get("score", 0),
-                tone_confidence_feedback=tone_and_confidence.get("feedback", ""),
-                close_attempt_score=close_attempt.get("score", 0),
-                close_attempt_feedback=close_attempt.get("feedback", ""),
-                best_moment=scorecard_json.get("best_moment", ""),
-                biggest_mistake=scorecard_json.get("biggest_mistake", ""),
-                what_to_say_instead=scorecard_json.get("what_to_say_instead", ""),
-                meeting_booked=scorecard_json.get("meeting_booked", False),
-                annotations=annotations,
-            ),
         )
+
+
+@app.post("/sessions/{session_id}/scorecard")
+async def save_scorecard(session_id: str, scorecard: ScorecardData):
+    """Save a pre-generated scorecard (called after client-side streaming completes)."""
+    async with get_db_connection() as conn:
+        session_exists = await conn.fetchval(
+            "SELECT EXISTS(SELECT 1 FROM sessions WHERE id = $1)",
+            session_id,
+        )
+        if not session_exists:
+            raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
+
+        await conn.execute(
+            """
+            INSERT INTO scorecards (
+                session_id, overall_score,
+                opener_score, opener_feedback,
+                objection_handling_score, objection_handling_feedback,
+                tone_confidence_score, tone_confidence_feedback,
+                close_attempt_score, close_attempt_feedback,
+                best_moment, biggest_mistake, what_to_say_instead,
+                meeting_booked, annotations, signals,
+                prompt_version, model_version, generated_at
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,NOW())
+            ON CONFLICT (session_id) DO UPDATE SET
+                overall_score = EXCLUDED.overall_score,
+                opener_score = EXCLUDED.opener_score,
+                opener_feedback = EXCLUDED.opener_feedback,
+                objection_handling_score = EXCLUDED.objection_handling_score,
+                objection_handling_feedback = EXCLUDED.objection_handling_feedback,
+                tone_confidence_score = EXCLUDED.tone_confidence_score,
+                tone_confidence_feedback = EXCLUDED.tone_confidence_feedback,
+                close_attempt_score = EXCLUDED.close_attempt_score,
+                close_attempt_feedback = EXCLUDED.close_attempt_feedback,
+                best_moment = EXCLUDED.best_moment,
+                biggest_mistake = EXCLUDED.biggest_mistake,
+                what_to_say_instead = EXCLUDED.what_to_say_instead,
+                meeting_booked = EXCLUDED.meeting_booked,
+                annotations = EXCLUDED.annotations,
+                signals = EXCLUDED.signals,
+                prompt_version = EXCLUDED.prompt_version,
+                model_version = EXCLUDED.model_version,
+                generated_at = NOW()
+            """,
+            session_id,
+            scorecard.overall_score,
+            scorecard.opener_score,
+            scorecard.opener_feedback,
+            scorecard.objection_handling_score,
+            scorecard.objection_handling_feedback,
+            scorecard.tone_confidence_score,
+            scorecard.tone_confidence_feedback,
+            scorecard.close_attempt_score,
+            scorecard.close_attempt_feedback,
+            scorecard.best_moment,
+            scorecard.biggest_mistake,
+            scorecard.what_to_say_instead,
+            scorecard.meeting_booked,
+            json.dumps(scorecard.annotations) if scorecard.annotations else None,
+            json.dumps(scorecard.signals) if scorecard.signals else None,
+            scorecard.prompt_version or CURRENT_PROMPT_VERSION,
+            scorecard.model_version or GEMINI_MODEL,
+        )
+
+    return {"status": "ok"}
 
 
 @app.get("/sessions/{session_id}", response_model=SessionDetail)
 async def get_session(session_id: str):
     """Fetch full session details including messages and scorecard."""
     async with get_db_connection() as conn:
-        # Fetch session
         session_row = await conn.fetchrow(
             "SELECT id, user_id, persona_id, conversation_id, started_at, status FROM sessions WHERE id = $1",
             session_id,
@@ -361,7 +341,6 @@ async def get_session(session_id: str):
         if not session_row:
             raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
 
-        # Fetch messages
         message_rows = await conn.fetch(
             """
             SELECT id, session_id, role, content, turn_number, created_at
@@ -384,7 +363,6 @@ async def get_session(session_id: str):
             for row in message_rows
         ]
 
-        # Fetch scorecard if exists
         scorecard_row = await conn.fetchrow(
             """
             SELECT overall_score,
@@ -393,7 +371,7 @@ async def get_session(session_id: str):
                    tone_confidence_score, tone_confidence_feedback,
                    close_attempt_score, close_attempt_feedback,
                    best_moment, biggest_mistake, what_to_say_instead,
-                   meeting_booked, annotations
+                   meeting_booked, annotations, signals, prompt_version, model_version
             FROM scorecards
             WHERE session_id = $1
             """,
@@ -402,8 +380,11 @@ async def get_session(session_id: str):
 
         scorecard = None
         if scorecard_row:
-            raw_annotations = scorecard_row["annotations"]
-            annotations = json.loads(raw_annotations) if isinstance(raw_annotations, str) else (raw_annotations or [])
+            def parse_json_col(val):
+                if isinstance(val, str):
+                    return json.loads(val)
+                return val or None
+
             scorecard = ScorecardData(
                 overall_score=scorecard_row["overall_score"],
                 opener_score=scorecard_row["opener_score"],
@@ -418,19 +399,22 @@ async def get_session(session_id: str):
                 biggest_mistake=scorecard_row["biggest_mistake"],
                 what_to_say_instead=scorecard_row["what_to_say_instead"],
                 meeting_booked=scorecard_row["meeting_booked"],
-                annotations=annotations,
+                annotations=parse_json_col(scorecard_row["annotations"]),
+                signals=parse_json_col(scorecard_row["signals"]),
+                prompt_version=scorecard_row["prompt_version"],
+                model_version=scorecard_row["model_version"],
             )
 
         return SessionDetail(
-        session=SessionResponse(
-            id=str(session_row["id"]),
-            user_id=session_row["user_id"],
-            persona_id=session_row["persona_id"],
-            conversation_id=session_row["conversation_id"],
-            started_at=session_row["started_at"],
-            ended_at=session_row["ended_at"],
-            status=session_row["status"],
-        ),
+            session=SessionResponse(
+                id=str(session_row["id"]),
+                user_id=session_row["user_id"],
+                persona_id=session_row["persona_id"],
+                conversation_id=session_row["conversation_id"],
+                started_at=session_row["started_at"],
+                ended_at=session_row["ended_at"],
+                status=session_row["status"],
+            ),
             messages=messages,
             scorecard=scorecard,
         )

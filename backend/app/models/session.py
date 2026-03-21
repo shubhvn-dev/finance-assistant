@@ -41,13 +41,16 @@ class ScorecardData(BaseModel):
     what_to_say_instead: str
     meeting_booked: bool
     annotations: Optional[list[Any]] = None
+    signals: Optional[Any] = None
+    prompt_version: Optional[str] = None
+    model_version: Optional[str] = None
 
 
 class EndSessionResponse(BaseModel):
     session_id: str
     status: str
     ended_at: datetime
-    scorecard: ScorecardData
+    scorecard: Optional[ScorecardData] = None
 
 
 class Message(BaseModel):

@@ -13,6 +13,12 @@ PERSONAS = {
             "What makes you different?",
             "I don't pay fees for something I do myself",
         ],
+        "background": "Retired mechanical engineer, highly analytical, self-directed investor for 30 years, has existing Fidelity relationship, skeptical of anyone who can't beat his own returns",
+        "scoring_weights": {
+            "objection_handling": 1.5,
+            "tone_confidence": 1.3,
+            "close_attempt": 1.2,
+        },
     },
     "sarah": {
         "name": "Sarah Mitchell",
@@ -28,6 +34,12 @@ PERSONAS = {
             "Everything's on autopilot",
             "What's this going to cost me?",
         ],
+        "background": "Senior executive, time-poor, values efficiency, already has a competent Vanguard setup, needs a compelling reason to switch or engage",
+        "scoring_weights": {
+            "objection_handling": 1.1,
+            "tone_confidence": 1.0,
+            "close_attempt": 1.1,
+        },
     },
     "marcus": {
         "name": "Marcus Johnson",
@@ -43,5 +55,11 @@ PERSONAS = {
             "What's your minimum?",
             "Can I check your website first?",
         ],
+        "background": "Young founder, crypto-oriented, open to new things but easily distracted, needs education more than persuasion",
+        "scoring_weights": {
+            "objection_handling": 0.8,
+            "tone_confidence": 1.2,
+            "close_attempt": 0.9,
+        },
     },
 }

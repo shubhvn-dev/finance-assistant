@@ -1,7 +1,7 @@
 'use client';
 
 import { useConversation } from '@elevenlabs/react';
-import { Mic, PhoneOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Mic, PhoneOff, AlertCircle } from 'lucide-react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { clsx } from 'clsx';
 import { useRouter } from 'next/navigation';
@@ -17,27 +17,24 @@ export function normalizeMessageRole(messageRole: string): 'advisor' | 'prospect
   if (messageRole === 'user') {
     return 'advisor';
   }
-
   return 'prospect';
 }
 
-export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps) {
+export function VoiceCallUI({ agentId, sessionId }: VoiceCallUIProps) {
   const router = useRouter();
   const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [configError, setConfigError] = useState<boolean>(false);
-  const [isGeneratingScorecard, setIsGeneratingScorecard] = useState(false);
-  const [scorecardReady, setScorecardReady] = useState(false);
+  const [isEndingCall, setIsEndingCall] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const turnCounterRef = useRef(0);
+
   useEffect(() => {
     console.log('[VoiceCallUI] Initialized with session ID:', sessionId);
   }, [sessionId]);
 
-  // Check for valid configuration on mount
   useEffect(() => {
     console.log(`[VoiceCallUI] Initializing with Agent ID: ${agentId}`);
-    
     if (!agentId || agentId.includes('placeholder')) {
       console.error('[VoiceCallUI] Error: Agent ID is not configured or is a placeholder.');
       setConfigError(true);
@@ -55,7 +52,6 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
     onDisconnect: () => {
       console.log('[VoiceCallUI] Disconnected from ElevenLabs WebSocket');
       setConnectionStatus('disconnected');
-      // Note: Session ending is handled in handleEndCall, not here
     },
     onMessage: async (message) => {
       console.log('[VoiceCallUI] Message received:', message);
@@ -65,19 +61,12 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
         return;
       }
 
-      // Extract message data
       const messageText = message.message || '';
       const messageRole = String(message.source || message.role || 'unknown');
-
-      // Transform role: 'user' -> 'advisor', 'agent'/'ai' -> 'prospect'
       const transformedRole = normalizeMessageRole(messageRole);
-      if (transformedRole === 'prospect' && messageRole !== 'agent' && messageRole !== 'ai') {
-        console.warn('[VoiceCallUI] Unknown message role:', messageRole, 'defaulting to prospect');
-      }
 
       turnCounterRef.current += 1;
 
-      // Fire-and-forget message save
       addMessage(sessionId, {
         role: transformedRole,
         content: messageText,
@@ -106,7 +95,6 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
       console.log('[VoiceCallUI] Starting call with session:', sessionId);
       // @ts-ignore - connectionType is required by the SDK
       await startSession({ agentId, connectionType: 'websocket' });
-      console.log('[VoiceCallUI] Call started, ready to receive messages');
     } catch (error) {
       console.error('[VoiceCallUI] Failed to start session:', error);
       setError(`Failed to start: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -115,40 +103,20 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
   }, [startSession, agentId, configError, sessionId]);
 
   const handleEndCall = useCallback(async () => {
-    console.log('[VoiceCallUI] handleEndCall - Starting to end call');
-    console.log('[VoiceCallUI] Current sessionId:', sessionId);
+    console.log('[VoiceCallUI] Ending call for session:', sessionId);
+    setIsEndingCall(true);
 
-    // End the ElevenLabs session
     await endSession();
 
-    // Manually trigger scorecard generation if we have a session
-    if (sessionId && !isGeneratingScorecard) {
-      console.log('[VoiceCallUI] Manually triggering scorecard generation');
-      setIsGeneratingScorecard(true);
-      setError(null);
-
+    if (sessionId) {
       try {
-        console.log('[VoiceCallUI] Calling endBackendSession for:', sessionId);
-        console.log('[VoiceCallUI] This may take 5-10 seconds...');
-
-        const result = await endBackendSession(sessionId);
-
-        console.log('[VoiceCallUI] Scorecard generated successfully:', result);
-        setIsGeneratingScorecard(false);
-        setScorecardReady(true);
+        await endBackendSession(sessionId);
       } catch (err) {
-        console.error('[VoiceCallUI] Failed to generate scorecard:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        setError(`Failed to generate scorecard: ${errorMessage}. You can still view the transcript at /session/${sessionId}/scorecard`);
-        setIsGeneratingScorecard(false);
-
-        // Still allow viewing the report even if scorecard generation failed
-        setTimeout(() => {
-          setScorecardReady(true);
-        }, 3000);
+        console.error('[VoiceCallUI] Failed to end session:', err);
       }
+      router.push(`/session/${sessionId}/scorecard`);
     }
-  }, [endSession, sessionId, isGeneratingScorecard]);
+  }, [endSession, sessionId, router]);
 
   if (configError) {
     return (
@@ -161,29 +129,12 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
     );
   }
 
-  if (isGeneratingScorecard) {
+  if (isEndingCall) {
     return (
       <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-blue-50 rounded-2xl border border-blue-100">
         <div className="w-16 h-16 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin mb-4" />
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">Generating Scorecard</h3>
-        <p className="text-blue-700 text-center">Analyzing your call performance...</p>
-      </div>
-    );
-  }
-
-  if (scorecardReady && sessionId) {
-    return (
-      <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-green-50 rounded-2xl border border-green-200 shadow-lg">
-        <CheckCircle className="w-16 h-16 text-green-600 mb-4" />
-        <h3 className="text-2xl font-bold text-green-900 mb-2">Call Complete!</h3>
-        <p className="text-green-700 text-center mb-6">Your performance report is ready to view.</p>
-
-        <button
-          onClick={() => router.push(`/session/${sessionId}/scorecard`)}
-          className="flex items-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg text-lg"
-        >
-          View Report
-        </button>
+        <h3 className="text-lg font-semibold text-blue-900 mb-2">Ending Call</h3>
+        <p className="text-blue-700 text-center">Preparing your analysis...</p>
       </div>
     );
   }
@@ -215,9 +166,6 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
         </p>
         {sessionId && connectionStatus === 'connected' && (
           <p className="text-xs text-slate-400 mt-2">Session: {sessionId.slice(0, 8)}...</p>
-        )}
-        {sessionId && connectionStatus === 'disconnected' && !scorecardReady && !isGeneratingScorecard && (
-          <p className="text-xs text-slate-400 mt-2">Session ended - Click End Call to generate report</p>
         )}
       </div>
 

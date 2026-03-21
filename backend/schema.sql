@@ -42,6 +42,9 @@ CREATE TABLE IF NOT EXISTS scorecards (
     what_to_say_instead TEXT,
     meeting_booked BOOLEAN DEFAULT false,
     annotations JSONB DEFAULT NULL,
+    signals JSONB DEFAULT NULL,
+    prompt_version VARCHAR(50) DEFAULT 'v2.0',
+    model_version VARCHAR(50) DEFAULT 'unknown',
     generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

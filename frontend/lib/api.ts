@@ -80,7 +80,7 @@ export interface EndSessionResponse {
   session_id: string;
   status: string;
   ended_at: string;
-  scorecard: Scorecard;
+  scorecard?: Scorecard;
 }
 
 /**
@@ -164,6 +164,22 @@ export async function getSession(sessionId: string): Promise<SessionDetail> {
   }
 
   return response.json();
+}
+
+/**
+ * Save a pre-generated scorecard (called after streaming completes).
+ */
+export async function saveScorecard(sessionId: string, data: Partial<Scorecard>): Promise<void> {
+  const response = await fetch(`${API_URL}/sessions/${sessionId}/scorecard`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(parseApiError(error, 'Failed to save scorecard'));
+  }
 }
 
 /**
