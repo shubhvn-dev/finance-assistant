@@ -21,6 +21,7 @@ from app.models.session import (
     Message,
     SessionDetail,
 )
+from app.services.llm import LLMProviderError, build_fallback_scorecard, generate_scorecard
 from personas import PERSONAS
 from prompts import get_persona_prompt, SCORING_PROMPT
 
@@ -58,6 +59,25 @@ class ScoreRequest(BaseModel):
     persona_id: str
     user_id: str
     transcript: list[dict]
+
+
+def build_scoring_message(persona: dict, transcript_text: str) -> str:
+    return f"""Prospect persona: {persona['name']} — {persona['age']}-year-old {persona['occupation']}, {persona['portfolio_value']} portfolio at {persona['current_provider']}, difficulty: {persona['difficulty']}.
+
+Transcript:
+{transcript_text}
+
+Score this call now."""
+
+
+def extract_flattened_scorecard(scorecard_json: dict) -> tuple[int, dict, dict, dict, dict]:
+    return (
+        scorecard_json.get("overall_score", 0),
+        scorecard_json.get("opener", {}),
+        scorecard_json.get("objection_handling", {}),
+        scorecard_json.get("tone_and_confidence", {}),
+        scorecard_json.get("close_attempt", {}),
+    )
 
 
 @app.get("/personas")
@@ -117,29 +137,13 @@ def score(req: ScoreRequest):
         label = "Advisor" if entry["role"] == "advisor" else persona["name"]
         transcript_text += f"{label}: {entry['content']}\n"
 
-    scoring_message = f"""Prospect persona: {persona['name']} — {persona['age']}-year-old {persona['occupation']}, {persona['portfolio_value']} portfolio at {persona['current_provider']}, difficulty: {persona['difficulty']}.
-
-Transcript:
-{transcript_text}
-
-Score this call now."""
-
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=1024,
-        system=SCORING_PROMPT,
-        messages=[{"role": "user", "content": scoring_message}],
-    )
-
-    raw = response.content[0].text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[1]
-        raw = raw.rsplit("```", 1)[0].strip()
-
     try:
-        scorecard = json.loads(raw)
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Failed to parse scorecard JSON from Claude")
+        scorecard = generate_scorecard(
+            scoring_prompt=build_scoring_message(persona, transcript_text),
+            system_prompt=SCORING_PROMPT,
+        )
+    except LLMProviderError:
+        scorecard = build_fallback_scorecard()
 
     return {
         "persona_id": req.persona_id,
@@ -246,47 +250,18 @@ async def end_session(session_id: str):
             label = "Advisor" if msg["role"] == "advisor" else persona["name"]
             transcript_text += f"{label}: {msg['content']}\n"
 
-        # Generate scorecard using Claude
-        scoring_message = f"""Prospect persona: {persona['name']} — {persona['age']}-year-old {persona['occupation']}, {persona['portfolio_value']} portfolio at {persona['current_provider']}, difficulty: {persona['difficulty']}.
-
-Transcript:
-{transcript_text}
-
-Score this call now."""
-
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1024,
-            system=SCORING_PROMPT,
-            messages=[{"role": "user", "content": scoring_message}],
-        )
-
-        raw = response.content[0].text.strip()
-
-        # Strip markdown code fences if present
-        if raw.startswith("```"):
-            # Handle both ```json and ``` formats
-            lines = raw.split("\n")
-            raw = "\n".join(lines[1:])  # Remove first line with ```
-            raw = raw.rsplit("```", 1)[0].strip()
-
         try:
-            scorecard_json = json.loads(raw)
-        except json.JSONDecodeError as e:
-            print(f"[ERROR] Failed to parse Claude response. Raw content (first 500 chars):")
-            print(raw[:500])
-            print(f"[ERROR] JSON decode error: {e}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to parse scorecard JSON from Claude. Error: {str(e)}"
+            scorecard_json = generate_scorecard(
+                scoring_prompt=build_scoring_message(persona, transcript_text),
+                system_prompt=SCORING_PROMPT,
             )
+        except LLMProviderError:
+            scorecard_json = build_fallback_scorecard()
 
         # Extract nested scores and flatten for database
-        overall_score = scorecard_json.get("overall_score", 0)
-        opener = scorecard_json.get("opener", {})
-        objection_handling = scorecard_json.get("objection_handling", {})
-        tone_and_confidence = scorecard_json.get("tone_and_confidence", {})
-        close_attempt = scorecard_json.get("close_attempt", {})
+        overall_score, opener, objection_handling, tone_and_confidence, close_attempt = (
+            extract_flattened_scorecard(scorecard_json)
+        )
 
         # Insert scorecard
         await conn.execute(
@@ -354,7 +329,7 @@ async def get_session(session_id: str):
     async with get_db_connection() as conn:
         # Fetch session
         session_row = await conn.fetchrow(
-            "SELECT id, user_id, persona_id, conversation_id, started_at, status FROM sessions WHERE id = $1",
+            "SELECT id, user_id, persona_id, conversation_id, started_at, ended_at, status FROM sessions WHERE id = $1",
             session_id,
         )
 

@@ -72,10 +72,32 @@ class FakeConnection:
         return True
 
 
-def install_test_client(monkeypatch, connection):
+def install_test_client(monkeypatch, connection, *, raise_server_exceptions=True):
     monkeypatch.setattr(backend_main, "client", FakeAnthropicClient(TEST_SCORECARD_JSON))
     monkeypatch.setattr(backend_main, "get_pool", lambda: None)
     monkeypatch.setattr(backend_main, "close_pool", lambda: None)
+    monkeypatch.setattr(
+        backend_main,
+        "generate_scorecard",
+        lambda *, scoring_prompt, system_prompt: json.loads(TEST_SCORECARD_JSON),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        backend_main,
+        "build_fallback_scorecard",
+        lambda: {
+            "overall_score": 0,
+            "opener": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
+            "objection_handling": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
+            "tone_and_confidence": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
+            "close_attempt": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
+            "best_moment": "Automatic AI scoring was unavailable for this call.",
+            "biggest_mistake": "Automatic AI scoring was unavailable for this call.",
+            "what_to_say_instead": "Retry scorecard generation after configuring a supported LLM provider.",
+            "meeting_booked": False,
+        },
+        raising=False,
+    )
 
     @asynccontextmanager
     async def fake_get_db_connection():
@@ -83,7 +105,10 @@ def install_test_client(monkeypatch, connection):
 
     monkeypatch.setattr(backend_main, "get_db_connection", fake_get_db_connection)
 
-    return TestClient(backend_main.app)
+    return TestClient(
+        backend_main.app,
+        raise_server_exceptions=raise_server_exceptions,
+    )
 
 
 TEST_SCORECARD_JSON = json.dumps(
@@ -137,6 +162,50 @@ def test_end_session_persists_scorecard_and_marks_completed(monkeypatch):
     assert any("UPDATE sessions SET status = 'completed'" in query for query, _ in connection.executed)
 
 
+def test_end_session_uses_provider_wrapper_for_scorecard_generation(monkeypatch):
+    session_id = "55555555-5555-5555-5555-555555555555"
+    connection = FakeConnection(
+        session_row={
+            "id": session_id,
+            "user_id": "temp-user-001",
+            "persona_id": "robert",
+            "started_at": datetime(2026, 3, 21, tzinfo=timezone.utc),
+            "status": "in_progress",
+        },
+        message_rows=[
+            {
+                "role": "advisor",
+                "content": "Hi, I wanted to reach out.",
+                "turn_number": 1,
+            },
+            {
+                "role": "prospect",
+                "content": "Tell me more.",
+                "turn_number": 2,
+            },
+        ],
+    )
+    client = install_test_client(monkeypatch, connection)
+
+    monkeypatch.setattr(
+        backend_main.client.messages,
+        "create",
+        lambda **kwargs: (_ for _ in ()).throw(RuntimeError("Anthropic should not be called")),
+    )
+
+    monkeypatch.setattr(
+        backend_main,
+        "generate_scorecard",
+        lambda *, scoring_prompt, system_prompt: json.loads(TEST_SCORECARD_JSON),
+        raising=False,
+    )
+
+    response = client.post(f"/sessions/{session_id}/end")
+
+    assert response.status_code == 200
+    assert response.json()["scorecard"]["overall_score"] == 8
+
+
 def test_end_session_rejects_already_completed_session(monkeypatch):
     session_id = "22222222-2222-2222-2222-222222222222"
     connection = FakeConnection(
@@ -156,10 +225,84 @@ def test_end_session_rejects_already_completed_session(monkeypatch):
     assert response.status_code == 409
 
 
+def test_end_session_generates_fallback_scorecard_when_scoring_fails(monkeypatch):
+    session_id = "44444444-4444-4444-4444-444444444444"
+    connection = FakeConnection(
+        session_row={
+            "id": session_id,
+            "user_id": "temp-user-001",
+            "persona_id": "robert",
+            "started_at": datetime(2026, 3, 21, tzinfo=timezone.utc),
+            "status": "in_progress",
+        },
+        message_rows=[
+            {
+                "role": "advisor",
+                "content": "Hi, I wanted to reach out.",
+                "turn_number": 1,
+            }
+        ],
+    )
+    client = install_test_client(
+        monkeypatch,
+        connection,
+        raise_server_exceptions=False,
+    )
+
+    monkeypatch.setattr(
+        backend_main,
+        "generate_scorecard",
+        lambda *, scoring_prompt, system_prompt: (_ for _ in ()).throw(
+            backend_main.LLMProviderError("Gemini unavailable")
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        backend_main,
+        "build_fallback_scorecard",
+        lambda: {
+            "overall_score": 0,
+            "opener": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
+            "objection_handling": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
+            "tone_and_confidence": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
+            "close_attempt": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
+            "best_moment": "Automatic AI scoring was unavailable for this call.",
+            "biggest_mistake": "Automatic AI scoring was unavailable for this call.",
+            "what_to_say_instead": "Retry scorecard generation after configuring a supported LLM provider.",
+            "meeting_booked": False,
+        },
+        raising=False,
+    )
+
+    response = client.post(
+        f"/sessions/{session_id}/end",
+        headers={"Origin": "http://localhost:3000"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["session_id"] == session_id
+    assert body["status"] == "completed"
+    assert body["scorecard"]["overall_score"] == 0
+    assert body["scorecard"]["best_moment"] == "Automatic AI scoring was unavailable for this call."
+    assert any("INSERT INTO scorecards" in query for query, _ in connection.executed)
+    assert any("UPDATE sessions SET status = 'completed'" in query for query, _ in connection.executed)
+    assert response.headers["access-control-allow-origin"] == "*"
+
+
 def test_get_session_includes_ended_at(monkeypatch):
+    class ProjectionConnection(FakeConnection):
+        async def fetchrow(self, query, *args):
+            row = await super().fetchrow(query, *args)
+            if row and "FROM sessions WHERE id = $1" in query and "ended_at" not in query:
+                projected_row = dict(row)
+                projected_row.pop("ended_at", None)
+                return projected_row
+            return row
+
     session_id = "33333333-3333-3333-3333-333333333333"
     ended_at = datetime(2026, 3, 21, 16, 30, tzinfo=timezone.utc)
-    connection = FakeConnection(
+    connection = ProjectionConnection(
         session_row={
             "id": session_id,
             "user_id": "temp-user-001",
