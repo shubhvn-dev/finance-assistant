@@ -34,13 +34,13 @@ export default async function ScorecardPage({ params }: ScorecardPageProps) {
   const personaName = PERSONA_NAMES[session.persona_id] || session.persona_id;
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
+    <main className="min-h-screen bg-cream-50 p-8">
       <div className="max-w-4xl mx-auto">
         {/* Navigation */}
         <div className="flex items-center justify-between mb-8">
           <Link
             href="/session/new"
-            className="inline-flex items-center text-slate-500 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center text-brand-400 hover:text-brand-700 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             New Session
@@ -48,7 +48,7 @@ export default async function ScorecardPage({ params }: ScorecardPageProps) {
 
           <Link
             href="/"
-            className="inline-flex items-center text-slate-500 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center text-brand-400 hover:text-brand-700 transition-colors"
           >
             <Home className="w-4 h-4 mr-2" />
             Home
@@ -59,20 +59,20 @@ export default async function ScorecardPage({ params }: ScorecardPageProps) {
         {scorecard ? (
           <Scorecard scorecard={scorecard} personaName={personaName} />
         ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 text-center">
-            <h1 className="text-2xl font-bold text-yellow-900 mb-4">Scorecard Not Available</h1>
-            <p className="text-yellow-700">
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
+            <h1 className="text-2xl font-display text-amber-900 mb-4">Scorecard Not Available</h1>
+            <p className="text-amber-700">
               This session has not been scored yet. Please complete the call first.
             </p>
           </div>
         )}
 
         {/* Transcript */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 mt-6">
-          <h3 className="text-xl font-bold text-slate-900 mb-6">Call Transcript</h3>
+        <div className="bg-white rounded-2xl shadow-lg border border-cream-200 p-8 mt-6">
+          <h3 className="font-display text-xl text-brand-900 mb-6">Call Transcript</h3>
 
           {messages.length === 0 ? (
-            <p className="text-slate-500 text-center py-8">No messages recorded.</p>
+            <p className="text-brand-400 text-center py-8">No messages recorded.</p>
           ) : (
             <div className="space-y-4">
               {messages.map((message, idx) => (
@@ -80,21 +80,21 @@ export default async function ScorecardPage({ params }: ScorecardPageProps) {
                   key={message.id}
                   className={`p-4 rounded-lg ${
                     message.role === 'advisor'
-                      ? 'bg-blue-50 border border-blue-100'
-                      : 'bg-slate-50 border border-slate-100'
+                      ? 'bg-brand-50 border border-brand-100'
+                      : 'bg-cream-100 border border-cream-200'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <span
                       className={`text-xs font-semibold uppercase ${
-                        message.role === 'advisor' ? 'text-blue-700' : 'text-slate-700'
+                        message.role === 'advisor' ? 'text-brand-600' : 'text-brand-400'
                       }`}
                     >
                       {message.role === 'advisor' ? 'You' : personaName}
                     </span>
-                    <span className="text-xs text-slate-400">Turn {message.turn_number}</span>
+                    <span className="text-xs text-brand-300">Turn {message.turn_number}</span>
                   </div>
-                  <p className="text-slate-800">{message.content}</p>
+                  <p className="text-brand-800">{message.content}</p>
                 </div>
               ))}
             </div>
@@ -105,7 +105,7 @@ export default async function ScorecardPage({ params }: ScorecardPageProps) {
         <div className="mt-8 flex justify-center gap-4">
           <Link
             href="/session/new"
-            className="px-6 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
+            className="btn-primary"
           >
             Practice Again
           </Link>

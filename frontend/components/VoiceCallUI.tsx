@@ -37,7 +37,7 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
   // Check for valid configuration on mount
   useEffect(() => {
     console.log(`[VoiceCallUI] Initializing with Agent ID: ${agentId}`);
-    
+
     if (!agentId || agentId.includes('placeholder')) {
       console.error('[VoiceCallUI] Error: Agent ID is not configured or is a placeholder.');
       setConfigError(true);
@@ -152,10 +152,10 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
 
   if (configError) {
     return (
-      <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-red-50 rounded-2xl border border-red-100">
+      <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-red-50 rounded-2xl border border-red-200">
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-        <h3 className="text-lg font-semibold text-red-900 mb-2">Configuration Error</h3>
-        <p className="text-red-700 text-center">Temporarily unavailable. Please try later.</p>
+        <h3 className="text-lg font-semibold text-red-800 mb-2">Configuration Error</h3>
+        <p className="text-red-600 text-center">Temporarily unavailable. Please try later.</p>
         <p className="text-xs text-red-500 mt-4 font-mono">Missing Agent ID</p>
       </div>
     );
@@ -163,10 +163,10 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
 
   if (isGeneratingScorecard) {
     return (
-      <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-blue-50 rounded-2xl border border-blue-100">
-        <div className="w-16 h-16 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin mb-4" />
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">Generating Scorecard</h3>
-        <p className="text-blue-700 text-center">Analyzing your call performance...</p>
+      <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-brand-50 rounded-2xl border border-brand-100">
+        <div className="w-16 h-16 rounded-full border-4 border-brand-200 border-t-brand-500 animate-spin mb-4" />
+        <h3 className="text-lg font-display text-brand-900 mb-2">Generating Scorecard</h3>
+        <p className="text-brand-500 text-center">Analyzing your call performance...</p>
       </div>
     );
   }
@@ -175,12 +175,12 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
     return (
       <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-green-50 rounded-2xl border border-green-200 shadow-lg">
         <CheckCircle className="w-16 h-16 text-green-600 mb-4" />
-        <h3 className="text-2xl font-bold text-green-900 mb-2">Call Complete!</h3>
+        <h3 className="text-2xl font-display text-green-900 mb-2">Call Complete!</h3>
         <p className="text-green-700 text-center mb-6">Your performance report is ready to view.</p>
 
         <button
           onClick={() => router.push(`/session/${sessionId}/scorecard`)}
-          className="flex items-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg text-lg"
+          className="btn-primary text-lg px-8 py-4"
         >
           View Report
         </button>
@@ -189,35 +189,40 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-slate-100">
+    <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-cream-200">
       {error && (
-        <div className="mb-4 w-full p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 text-sm text-center">{error}</p>
+        <div className="mb-4 w-full p-3 bg-red-50 border border-red-200 rounded-xl">
+          <p className="text-red-600 text-sm text-center">{error}</p>
         </div>
       )}
 
       <div className="mb-8 flex flex-col items-center">
-        <div className={clsx(
-          "w-24 h-24 rounded-full flex items-center justify-center mb-4 transition-all duration-500",
-          connectionStatus === 'connected' ? "bg-blue-50 animate-pulse" : "bg-slate-50",
-          isSpeaking && "scale-110 bg-blue-100"
-        )}>
+        <div
+          className={clsx(
+            "w-28 h-28 rounded-full flex items-center justify-center mb-4 transition-all duration-500",
+            connectionStatus === 'disconnected' && "bg-cream-100",
+            connectionStatus === 'connected' && !isSpeaking && "bg-brand-50",
+            isSpeaking && "bg-brand-100 scale-110"
+          )}
+          style={connectionStatus === 'connected' && !isSpeaking ? { animation: 'pulse-soft 2s ease-in-out infinite' } : undefined}
+        >
           <div className={clsx(
             "w-4 h-4 rounded-full transition-colors duration-300",
-            connectionStatus === 'connected' ? "bg-blue-500" : "bg-slate-300",
-            isSpeaking && "bg-blue-600"
+            connectionStatus === 'disconnected' && "bg-brand-200",
+            connectionStatus === 'connected' && !isSpeaking && "bg-brand-500",
+            isSpeaking && "bg-brand-600"
           )} />
         </div>
-        <p className="text-slate-500 font-medium">
-          {connectionStatus === 'disconnected' && 'Ready to call'}
+        <p className="font-display text-lg text-brand-900">
+          {connectionStatus === 'disconnected' && 'Ready to Call'}
           {connectionStatus === 'connecting' && 'Connecting...'}
-          {connectionStatus === 'connected' && (isSpeaking ? 'Agent speaking...' : 'Listening...')}
+          {connectionStatus === 'connected' && (isSpeaking ? 'Speaking...' : 'Listening...')}
         </p>
         {sessionId && connectionStatus === 'connected' && (
-          <p className="text-xs text-slate-400 mt-2">Session: {sessionId.slice(0, 8)}...</p>
+          <p className="font-mono text-xs text-brand-300 mt-2">Session: {sessionId.slice(0, 8)}...</p>
         )}
         {sessionId && connectionStatus === 'disconnected' && !scorecardReady && !isGeneratingScorecard && (
-          <p className="text-xs text-slate-400 mt-2">Session ended - Click End Call to generate report</p>
+          <p className="font-mono text-xs text-brand-300 mt-2">Session ended - Click End Call to generate report</p>
         )}
       </div>
 
@@ -225,7 +230,7 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
         {connectionStatus === 'disconnected' ? (
           <button
             onClick={handleStartCall}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition-colors shadow-sm hover:shadow-md"
+            className="btn-primary"
           >
             <Mic className="w-5 h-5" />
             Start Call
@@ -233,7 +238,7 @@ export function VoiceCallUI({ agentId, personaId, sessionId }: VoiceCallUIProps)
         ) : (
           <button
             onClick={handleEndCall}
-            className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-colors shadow-sm hover:shadow-md"
+            className="flex items-center gap-2 px-6 py-3 bg-red-50 border border-red-200 text-red-600 rounded-full font-semibold hover:bg-red-500 hover:text-white hover:border-red-500 transition-all"
           >
             <PhoneOff className="w-5 h-5" />
             End Call

@@ -60,47 +60,47 @@ export default function CallLogsPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
+    <main className="min-h-screen bg-cream-50 p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <Link
               href="/"
-              className="inline-flex items-center text-slate-500 hover:text-slate-900 transition-colors mb-4"
+              className="inline-flex items-center text-brand-400 hover:text-brand-700 transition-colors mb-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Home
             </Link>
-            <h1 className="text-3xl font-bold text-slate-900">Call Logs</h1>
-            <p className="text-slate-500 mt-2">Review your practice sessions and performance</p>
+            <h1 className="font-display text-3xl text-brand-900">Call Logs</h1>
+            <p className="text-brand-400 mt-2">Review your practice sessions and performance</p>
           </div>
         </div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
-            <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin mx-auto mb-4" />
-            <p className="text-slate-500">Loading call history...</p>
+          <div className="bg-white rounded-2xl shadow-sm border border-cream-200 p-12 text-center">
+            <div className="w-12 h-12 rounded-full border-4 border-brand-200 border-t-brand-500 animate-spin mx-auto mb-4" />
+            <p className="text-brand-400">Loading call history...</p>
           </div>
         )}
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-50 rounded-xl border border-red-200 p-6 text-center">
-            <p className="text-red-700">{error}</p>
+          <div className="bg-red-50 rounded-2xl border border-red-200 p-6 text-center">
+            <p className="text-red-600">{error}</p>
           </div>
         )}
 
         {/* Empty State */}
         {!isLoading && !error && sessions.length === 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
-            <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">No calls yet</h3>
-            <p className="text-slate-500 mb-6">Start your first practice session to see it here</p>
+          <div className="bg-white rounded-2xl shadow-sm border border-cream-200 p-12 text-center">
+            <FileText className="w-16 h-16 text-brand-200 mx-auto mb-4" />
+            <h3 className="font-display text-xl text-brand-900 mb-2">No calls yet</h3>
+            <p className="text-brand-400 mb-6">Start your first practice session to see it here</p>
             <Link
               href="/session/new"
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition-colors"
+              className="btn-primary"
             >
               Start Practice
             </Link>
@@ -109,53 +109,53 @@ export default function CallLogsPage() {
 
         {/* Table */}
         {!isLoading && !error && sessions.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-cream-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-cream-100 border-b border-cream-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-brand-400 uppercase tracking-wider">
                       Date & Time
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-brand-400 uppercase tracking-wider">
                       Persona
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-brand-400 uppercase tracking-wider">
                       Duration
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-brand-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-brand-400 uppercase tracking-wider">
                       Action
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-cream-200">
                   {sessions.map((session) => (
                     <tr
                       key={session.id}
-                      className="hover:bg-slate-50 transition-colors cursor-pointer"
+                      className="border-b border-cream-200 hover:bg-brand-50 transition-colors cursor-pointer"
                       onClick={() => window.location.href = `/session/${session.id}/scorecard`}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <Clock className="w-4 h-4 text-slate-400 mr-2" />
-                          <span className="text-sm text-slate-900">
+                          <Clock className="w-4 h-4 text-brand-300 mr-2" />
+                          <span className="text-sm text-brand-800">
                             {formatDate(session.started_at)}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <User className="w-4 h-4 text-slate-400 mr-2" />
-                          <span className="text-sm text-slate-900">
+                          <User className="w-4 h-4 text-brand-300 mr-2" />
+                          <span className="text-sm text-brand-800">
                             {PERSONA_NAMES[session.persona_id] || session.persona_id}
                           </span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-600">
+                        <span className="text-sm text-brand-800">
                           {getDuration(session.started_at, session.ended_at)}
                         </span>
                       </td>
@@ -163,10 +163,10 @@ export default function CallLogsPage() {
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             session.status === 'completed'
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-green-50 text-green-700'
                               : session.status === 'in_progress'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-gray-100 text-gray-800'
+                              ? 'bg-amber-50 text-amber-700'
+                              : 'bg-gray-100 text-gray-500'
                           }`}
                         >
                           {session.status === 'completed' ? 'Completed' :
@@ -177,7 +177,7 @@ export default function CallLogsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <Link
                           href={`/session/${session.id}/scorecard`}
-                          className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                          className="inline-flex items-center gap-1 text-sm font-medium text-brand-500 hover:text-brand-700"
                           onClick={(e) => e.stopPropagation()}
                         >
                           View Report

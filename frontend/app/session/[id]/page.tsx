@@ -52,27 +52,27 @@ export default function SessionPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8 flex flex-col">
+    <main className="min-h-screen bg-cream-50 p-8 flex flex-col">
       <div className="max-w-4xl mx-auto w-full">
-        <Link href="/session/new" className="inline-flex items-center text-slate-500 hover:text-slate-900 mb-8">
+        <Link href="/session/new" className="inline-flex items-center text-brand-400 hover:text-brand-700 mb-8 transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Change Persona
         </Link>
 
         <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Practice with {persona.name}</h1>
-          <p className="text-slate-500">{persona.description}</p>
+          <h1 className="font-display text-3xl text-brand-900 mb-2">Practice with <span className="text-brand-600">{persona.name}</span></h1>
+          <p className="text-brand-400">{persona.description}</p>
         </div>
 
         {isCreatingSession ? (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-slate-100">
-            <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin mb-4" />
-            <p className="text-slate-500">Preparing session...</p>
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-cream-200">
+            <div className="w-12 h-12 rounded-full border-4 border-brand-200 border-t-brand-500 animate-spin mb-4" />
+            <p className="text-brand-400">Preparing session...</p>
           </div>
         ) : sessionId ? (
           <VoiceCallUI agentId={persona.agentId} personaId={backendPersonaId} sessionId={sessionId} />
         ) : (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-red-50 rounded-2xl border border-red-100">
+          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-red-50 rounded-2xl border border-red-200">
             <p className="text-red-700">Failed to create session. Please refresh the page.</p>
           </div>
         )}
