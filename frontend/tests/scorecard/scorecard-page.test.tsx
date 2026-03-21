@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Scorecard } from '@/components/Scorecard';
 import ScorecardPage from '@/app/session/[id]/scorecard/page';
 import { getSession } from '@/lib/api';
 
@@ -106,6 +107,8 @@ describe('ScorecardPage', () => {
         tone_confidence_feedback: 'Confident.',
         close_attempt_score: 5,
         close_attempt_feedback: 'Too early.',
+        discovery_score: 6,
+        discovery_feedback: 'Needed more curiosity.',
         best_moment: 'Clear value prop.',
         biggest_mistake: 'Did not ask permission.',
         what_to_say_instead: 'Is now an okay time for 30 seconds?',
@@ -130,7 +133,38 @@ describe('ScorecardPage', () => {
 
     expect(markup).toContain('Annotated');
     expect(markup).toContain('Weak opener');
-    expect(markup).toContain('Say this instead');
+    expect(markup).toContain('Try instead:');
     expect(markup).toContain('I work with families reviewing concentrated positions like yours.');
+  });
+
+  it('renders a five-axis performance radar in the scorecard header', () => {
+    const markup = renderToStaticMarkup(
+      <Scorecard
+        scorecard={{
+          overall_score: 8,
+          opener_score: 7,
+          opener_feedback: 'Solid start.',
+          objection_handling_score: 6,
+          objection_handling_feedback: 'Could improve.',
+          tone_confidence_score: 8,
+          tone_confidence_feedback: 'Confident.',
+          close_attempt_score: 5,
+          close_attempt_feedback: 'Too early.',
+          best_moment: 'Clear value prop.',
+          biggest_mistake: 'Did not ask permission.',
+          what_to_say_instead: 'Is now an okay time for 30 seconds?',
+          meeting_booked: true,
+          discovery_score: 9,
+          discovery_feedback: 'Great discovery questions.',
+        } as any}
+        personaName="Robert Chen"
+      />,
+    );
+
+    expect(markup).toContain('Performance Radar');
+    expect(markup).toContain('Discovery');
+    expect(markup).toContain('Opener');
+    expect(markup).toContain('Meeting Booked');
+    expect(markup).toContain('Robert Chen');
   });
 });

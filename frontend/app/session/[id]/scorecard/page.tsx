@@ -32,6 +32,9 @@ export default async function ScorecardPage({ params }: ScorecardPageProps) {
   const { session, messages, scorecard } = sessionDetail;
 
   const personaName = PERSONA_NAMES[session.persona_id] || session.persona_id;
+  const annotationMap = new Map<number, Annotation>(
+    (scorecard?.annotations ?? []).map((annotation: Annotation) => [annotation.turn_number, annotation]),
+  );
 
   return (
     <main className="min-h-screen bg-slate-50 p-8">
@@ -79,100 +82,78 @@ export default async function ScorecardPage({ params }: ScorecardPageProps) {
 
           {messages.length === 0 ? (
             <p className="text-slate-500 text-center py-8">No messages recorded.</p>
-          ) : (() => {
-            const annotationMap = new Map<number, Annotation>(
-              (scorecard?.annotations ?? []).map((a: Annotation) => [a.turn_number, a])
-            );
+          ) : (
+            <div className="space-y-3">
+              {messages.map((message: import('@/lib/api').Message) => {
+                const annotation =
+                  message.role === 'advisor' ? annotationMap.get(message.turn_number) : undefined;
+                const isGood = annotation?.type === 'good';
+                const isBad = annotation?.type === 'bad';
+                const calloutClasses = isGood
+                  ? 'bg-green-50 border-green-200'
+                  : isBad
+                    ? 'bg-red-50 border-red-200'
+                    : message.role === 'advisor'
+                      ? 'bg-blue-50 border-blue-100'
+                      : 'bg-slate-50 border-slate-100';
 
-            return (
-              <div className="space-y-3">
-                {messages.map((message: import('@/lib/api').Message) => {
-                  const annotation = message.role === 'advisor'
-                    ? annotationMap.get(message.turn_number)
-                    : undefined;
-
-                  const isGood = annotation?.type === 'good';
-                  const isBad = annotation?.type === 'bad';
-
-                  return (
-                    <div key={message.id}>
-                      {/* Message bubble */}
-                      <div
-                        className={`p-4 rounded-lg border ${
-                          isBad
-                            ? 'bg-red-50 border-red-200'
-                            : isGood
-                            ? 'bg-green-50 border-green-200'
-                            : message.role === 'advisor'
-                            ? 'bg-blue-50 border-blue-100'
-                            : 'bg-slate-50 border-slate-100'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          <span
-                            className={`text-xs font-semibold uppercase ${
-                              isBad
-                                ? 'text-red-700'
-                                : isGood
+                return (
+                  <div key={message.id}>
+                    <div className={`rounded-lg border p-4 ${calloutClasses}`}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span
+                          className={`text-xs font-semibold uppercase ${
+                            isBad
+                              ? 'text-red-700'
+                              : isGood
                                 ? 'text-green-700'
                                 : message.role === 'advisor'
-                                ? 'text-blue-700'
-                                : 'text-slate-700'
-                            }`}
-                          >
-                            {message.role === 'advisor' ? 'You' : personaName}
-                          </span>
-                          <span className="text-xs text-slate-400">Turn {message.turn_number}</span>
-                          {annotation && (
-                            <span
-                              className={`ml-auto flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                                isGood
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-red-100 text-red-700'
-                              }`}
-                            >
-                              {isGood ? (
-                                <TrendingUp className="w-3 h-3" />
-                              ) : (
-                                <TrendingDown className="w-3 h-3" />
-                              )}
-                              {annotation.label}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-slate-800">{message.content}</p>
-                      </div>
-
-                      {/* Annotation card */}
-                      {annotation && (
-                        <div
-                          className={`mx-4 rounded-b-xl border-x border-b px-4 py-3 ${
-                            isGood
-                              ? 'bg-green-50 border-green-200'
-                              : 'bg-red-50 border-red-200'
+                                  ? 'text-blue-700'
+                                  : 'text-slate-700'
                           }`}
                         >
-                          <p className={`text-sm ${isGood ? 'text-green-800' : 'text-red-800'}`}>
-                            {annotation.insight}
-                          </p>
-                          {annotation.rewrite && (
-                            <div className="mt-2 pt-2 border-t border-red-200">
-                              <p className="text-xs font-semibold text-red-600 uppercase mb-1">
-                                Say this instead
-                              </p>
-                              <p className="text-sm text-red-900 italic">
-                                &ldquo;{annotation.rewrite}&rdquo;
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                          {message.role === 'advisor' ? 'You' : personaName}
+                        </span>
+                        <span className="text-xs text-slate-400">Turn {message.turn_number}</span>
+                        {annotation && (
+                          <span
+                            className={`ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                              isGood ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {isGood ? (
+                              <TrendingUp className="h-3 w-3" />
+                            ) : (
+                              <TrendingDown className="h-3 w-3" />
+                            )}
+                            {annotation.label}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-slate-800">{message.content}</p>
                     </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
+
+                    {annotation && (
+                      <div
+                        className={`mx-4 border-l-2 px-4 py-3 ${
+                          isGood
+                            ? 'border-green-500 bg-green-50 text-green-900'
+                            : 'border-red-500 bg-red-50 text-red-900'
+                        }`}
+                      >
+                        <p className="text-sm">{annotation.insight}</p>
+                        {annotation.rewrite && (
+                          <p className="mt-2 text-sm italic text-green-700">
+                            Try instead: {annotation.rewrite}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Footer Actions */}

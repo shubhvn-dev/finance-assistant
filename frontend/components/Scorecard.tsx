@@ -1,6 +1,13 @@
 'use client';
 
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import {
+  PolarAngleAxis,
+  PolarGrid,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+} from 'recharts';
 import { Scorecard as ScorecardType } from '@/lib/api';
 
 interface ScorecardProps {
@@ -37,19 +44,118 @@ function ScoreBar({ label, score, feedback }: { label: string; score: number; fe
   );
 }
 
+function getDiscoveryScore(scorecard: ScorecardType): number {
+  return typeof scorecard.discovery_score === 'number'
+    ? scorecard.discovery_score
+    : Math.round(
+        (scorecard.opener_score +
+          scorecard.objection_handling_score +
+          scorecard.tone_confidence_score +
+          scorecard.close_attempt_score) /
+          4,
+      );
+}
+
+function PerformanceRadar({ scorecard }: { scorecard: ScorecardType }) {
+  const data = [
+    { label: 'Opener', score: scorecard.opener_score },
+    { label: 'Objection', score: scorecard.objection_handling_score },
+    { label: 'Tone', score: scorecard.tone_confidence_score },
+    { label: 'Discovery', score: getDiscoveryScore(scorecard) },
+    { label: 'Close', score: scorecard.close_attempt_score },
+  ];
+
+  const statCards = [
+    { label: 'Opener', score: scorecard.opener_score },
+    { label: 'Objection Handling', score: scorecard.objection_handling_score },
+    { label: 'Tone & Confidence', score: scorecard.tone_confidence_score },
+    { label: 'Discovery', score: getDiscoveryScore(scorecard) },
+    { label: 'Close Attempt', score: scorecard.close_attempt_score },
+  ];
+  const isServer = typeof window === 'undefined';
+
+  const chart = (
+    <RadarChart
+      data={data}
+      outerRadius="68%"
+      {...(isServer ? { width: 280, height: 220 } : {})}
+    >
+      <PolarGrid stroke="#475569" />
+      <PolarAngleAxis
+        dataKey="label"
+        tick={{ fill: '#cbd5e1', fontSize: 12, fontWeight: 600 }}
+      />
+      <Radar
+        dataKey="score"
+        fill="#1D9E75"
+        fillOpacity={0.25}
+        stroke="#34d399"
+        strokeWidth={2}
+      />
+    </RadarChart>
+  );
+
+  return (
+    <section className="rounded-3xl border border-slate-800 bg-slate-950 p-6 shadow-2xl shadow-slate-900/20">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">
+            Five-axis lens
+          </p>
+          <h3 className="text-2xl font-bold text-white">Performance Radar</h3>
+          <p className="mt-1 text-sm text-slate-300">
+            A fast read on the five behaviors the coach is scoring.
+          </p>
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-200">
+          Discovery-aware
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
+        <div className="mx-auto h-[240px] w-full max-w-[320px]">
+          {isServer ? chart : <ResponsiveContainer width="100%" height="100%">{chart}</ResponsiveContainer>}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {statCards.map((axis) => (
+            <div
+              key={axis.label}
+              className="rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                {axis.label}
+              </p>
+              <p className="mt-1 text-2xl font-bold text-white">{axis.score}/10</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function Scorecard({ scorecard, personaName }: ScorecardProps) {
   const { grade, color } = getGrade(scorecard.overall_score);
 
   return (
     <div className="w-full max-w-3xl mx-auto">
-      {/* Overall Score Header */}
-      <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 mb-6 text-center">
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Call Performance</h2>
-        {personaName && (
-          <p className="text-slate-500 mb-6">Practice session with {personaName}</p>
-        )}
-        <div className={`text-7xl font-bold ${color} mb-2`}>{grade}</div>
-        <div className="text-2xl text-slate-700">{scorecard.overall_score}/10</div>
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-8 mb-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Call Performance</h2>
+          {personaName && (
+            <p className="text-slate-500 mb-6">Practice session with {personaName}</p>
+          )}
+        </div>
+
+        <div className="mb-8">
+          <PerformanceRadar scorecard={scorecard} />
+        </div>
+
+        <div className="text-center">
+          <div className={`text-7xl font-bold ${color} mb-2`}>{grade}</div>
+          <div className="text-2xl text-slate-700">{scorecard.overall_score}/10</div>
+        </div>
 
         {/* Meeting Booked Status */}
         <div className="mt-6 flex items-center justify-center">
@@ -93,6 +199,12 @@ export function Scorecard({ scorecard, personaName }: ScorecardProps) {
           label="Close Attempt"
           score={scorecard.close_attempt_score}
           feedback={scorecard.close_attempt_feedback}
+        />
+
+        <ScoreBar
+          label="Discovery"
+          score={getDiscoveryScore(scorecard)}
+          feedback={scorecard.discovery_feedback ?? 'Discovery feedback unavailable.'}
         />
       </div>
 

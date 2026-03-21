@@ -51,6 +51,8 @@ export interface Scorecard {
   tone_confidence_feedback: string;
   close_attempt_score: number;
   close_attempt_feedback: string;
+  discovery_score?: number;
+  discovery_feedback?: string;
   best_moment: string;
   biggest_mistake: string;
   what_to_say_instead: string;

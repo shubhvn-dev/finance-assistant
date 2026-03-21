@@ -67,17 +67,32 @@ def build_scoring_message(persona: dict, transcript_text: str) -> str:
 Transcript:
 {transcript_text}
 
-Score this call now."""
+Score this call now across opener, objection handling, tone and confidence, discovery, and close attempt."""
 
 
-def extract_flattened_scorecard(scorecard_json: dict) -> tuple[int, dict, dict, dict, dict]:
+def extract_flattened_scorecard(scorecard_json: dict) -> tuple[int, dict, dict, dict, dict, dict]:
     return (
         scorecard_json.get("overall_score", 0),
         scorecard_json.get("opener", {}),
         scorecard_json.get("objection_handling", {}),
         scorecard_json.get("tone_and_confidence", {}),
         scorecard_json.get("close_attempt", {}),
+        scorecard_json.get("discovery", {}),
     )
+
+
+def normalize_annotations(raw_annotations: object) -> list[dict]:
+    if isinstance(raw_annotations, str):
+        try:
+            parsed_annotations = json.loads(raw_annotations)
+        except json.JSONDecodeError:
+            return []
+        return parsed_annotations if isinstance(parsed_annotations, list) else []
+
+    if isinstance(raw_annotations, list):
+        return raw_annotations
+
+    return []
 
 
 @app.get("/personas")
@@ -259,10 +274,10 @@ async def end_session(session_id: str):
             scorecard_json = build_fallback_scorecard()
 
         # Extract nested scores and flatten for database
-        overall_score, opener, objection_handling, tone_and_confidence, close_attempt = (
+        overall_score, opener, objection_handling, tone_and_confidence, close_attempt, discovery = (
             extract_flattened_scorecard(scorecard_json)
         )
-        annotations = scorecard_json.get("annotations", [])
+        annotations = normalize_annotations(scorecard_json.get("annotations"))
 
         # Insert scorecard
         await conn.execute(
@@ -273,10 +288,11 @@ async def end_session(session_id: str):
                 objection_handling_score, objection_handling_feedback,
                 tone_confidence_score, tone_confidence_feedback,
                 close_attempt_score, close_attempt_feedback,
+                discovery_score, discovery_feedback,
                 best_moment, biggest_mistake, what_to_say_instead,
                 meeting_booked, annotations, generated_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW())
             """,
             session_id,
             overall_score,
@@ -288,6 +304,8 @@ async def end_session(session_id: str):
             tone_and_confidence.get("feedback", ""),
             close_attempt.get("score", 0),
             close_attempt.get("feedback", ""),
+            discovery.get("score", 0),
+            discovery.get("feedback", ""),
             scorecard_json.get("best_moment", ""),
             scorecard_json.get("biggest_mistake", ""),
             scorecard_json.get("what_to_say_instead", ""),
@@ -317,6 +335,8 @@ async def end_session(session_id: str):
                 tone_confidence_feedback=tone_and_confidence.get("feedback", ""),
                 close_attempt_score=close_attempt.get("score", 0),
                 close_attempt_feedback=close_attempt.get("feedback", ""),
+                discovery_score=discovery.get("score", 0),
+                discovery_feedback=discovery.get("feedback", ""),
                 best_moment=scorecard_json.get("best_moment", ""),
                 biggest_mistake=scorecard_json.get("biggest_mistake", ""),
                 what_to_say_instead=scorecard_json.get("what_to_say_instead", ""),
@@ -370,6 +390,7 @@ async def get_session(session_id: str):
                    objection_handling_score, objection_handling_feedback,
                    tone_confidence_score, tone_confidence_feedback,
                    close_attempt_score, close_attempt_feedback,
+                   discovery_score, discovery_feedback,
                    best_moment, biggest_mistake, what_to_say_instead,
                    meeting_booked, annotations
             FROM scorecards
@@ -380,8 +401,7 @@ async def get_session(session_id: str):
 
         scorecard = None
         if scorecard_row:
-            raw_annotations = scorecard_row["annotations"]
-            annotations = json.loads(raw_annotations) if isinstance(raw_annotations, str) else (raw_annotations or [])
+            annotations = normalize_annotations(scorecard_row["annotations"])
             scorecard = ScorecardData(
                 overall_score=scorecard_row["overall_score"],
                 opener_score=scorecard_row["opener_score"],
@@ -392,6 +412,8 @@ async def get_session(session_id: str):
                 tone_confidence_feedback=scorecard_row["tone_confidence_feedback"],
                 close_attempt_score=scorecard_row["close_attempt_score"],
                 close_attempt_feedback=scorecard_row["close_attempt_feedback"],
+                discovery_score=scorecard_row["discovery_score"],
+                discovery_feedback=scorecard_row["discovery_feedback"],
                 best_moment=scorecard_row["best_moment"],
                 biggest_mistake=scorecard_row["biggest_mistake"],
                 what_to_say_instead=scorecard_row["what_to_say_instead"],

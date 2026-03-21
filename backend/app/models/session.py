@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
 
 
 class CreateSessionRequest(BaseModel):
@@ -26,6 +27,14 @@ class MessageRequest(BaseModel):
     turn_number: int
 
 
+class Annotation(BaseModel):
+    turn_number: int
+    type: str
+    label: str
+    insight: str
+    rewrite: Optional[str] = None
+
+
 class ScorecardData(BaseModel):
     overall_score: int
     opener_score: int
@@ -36,11 +45,13 @@ class ScorecardData(BaseModel):
     tone_confidence_feedback: str
     close_attempt_score: int
     close_attempt_feedback: str
+    discovery_score: int
+    discovery_feedback: str
     best_moment: str
     biggest_mistake: str
     what_to_say_instead: str
     meeting_booked: bool
-    annotations: Optional[list[Any]] = None
+    annotations: list[Annotation] = Field(default_factory=list)
 
 
 class EndSessionResponse(BaseModel):

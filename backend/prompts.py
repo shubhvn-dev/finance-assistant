@@ -44,6 +44,7 @@ Analyze the cold call transcript and score the advisor's performance.
 
 SCORING INSTRUCTIONS:
 - Score each category from 0 to 10.
+- Include a discovery score that reflects how well the advisor uncovered needs, priorities, pain points, or timing before pitching.
 - Be SPECIFIC in your feedback — reference exact phrases or moments from the transcript.
 - If the call was too short to evaluate a category (fewer than 2 turns), score that category 0 and write "Call ended too early to evaluate."
 - The meeting_booked field should be true ONLY if the prospect explicitly agreed to a meeting or follow-up call.
@@ -74,6 +75,10 @@ Return ONLY valid JSON with this EXACT structure (no markdown, no code fences, j
     "feedback": "Your feedback here referencing specific moments"
   },
   "close_attempt": {
+    "score": 5,
+    "feedback": "Your feedback here referencing specific moments"
+  },
+  "discovery": {
     "score": 5,
     "feedback": "Your feedback here referencing specific moments"
   },

@@ -91,6 +91,7 @@ def install_test_client(monkeypatch, connection, *, raise_server_exceptions=True
             "objection_handling": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
             "tone_and_confidence": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
             "close_attempt": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
+            "discovery": {"score": 0, "feedback": "Automatic AI scoring was unavailable for this call."},
             "best_moment": "Automatic AI scoring was unavailable for this call.",
             "biggest_mistake": "Automatic AI scoring was unavailable for this call.",
             "what_to_say_instead": "Retry scorecard generation after configuring a supported LLM provider.",
@@ -119,6 +120,7 @@ TEST_SCORECARD_JSON = json.dumps(
         "objection_handling": {"score": 8, "feedback": "Handled well."},
         "tone_and_confidence": {"score": 9, "feedback": "Confident."},
         "close_attempt": {"score": 6, "feedback": "Ask for next step earlier."},
+        "discovery": {"score": 9, "feedback": "Great discovery questions."},
         "best_moment": "Asked for a follow-up.",
         "biggest_mistake": "Could have closed sooner.",
         "what_to_say_instead": "Can we schedule 15 minutes next week?",
@@ -168,6 +170,7 @@ def test_end_session_persists_scorecard_and_marks_completed(monkeypatch):
     assert body["session_id"] == session_id
     assert body["status"] == "completed"
     assert body["scorecard"]["overall_score"] == 8
+    assert body["scorecard"]["discovery_score"] == 9
     assert body["scorecard"]["annotations"] == [
         {
             "turn_number": 1,
@@ -181,9 +184,37 @@ def test_end_session_persists_scorecard_and_marks_completed(monkeypatch):
         (query, args) for query, args in connection.executed if "INSERT INTO scorecards" in query
     )
     assert "annotations" in insert_query
+    assert "discovery_score" in insert_query
     assert json.loads(insert_args[-1]) == body["scorecard"]["annotations"]
     assert any("INSERT INTO scorecards" in query for query, _ in connection.executed)
     assert any("UPDATE sessions SET status = 'completed'" in query for query, _ in connection.executed)
+
+
+def test_end_session_sends_discovery_score_in_prompt(monkeypatch):
+    session_id = "aaaaaaa1-1111-1111-1111-111111111111"
+    connection = FakeConnection(
+        session_row={
+            "id": session_id,
+            "user_id": "temp-user-001",
+            "persona_id": "robert",
+            "started_at": datetime(2026, 3, 21, tzinfo=timezone.utc),
+            "status": "in_progress",
+        },
+        message_rows=[
+            {
+                "role": "advisor",
+                "content": "Hi, I wanted to reach out.",
+                "turn_number": 1,
+            },
+        ],
+    )
+    client = install_test_client(monkeypatch, connection)
+
+    response = client.post(f"/sessions/{session_id}/end")
+
+    assert response.status_code == 200
+    assert "discovery" in backend_main.SCORING_PROMPT.lower()
+    assert "annotations" in backend_main.SCORING_PROMPT.lower()
 
 
 def test_end_session_uses_provider_wrapper_for_scorecard_generation(monkeypatch):
@@ -348,6 +379,8 @@ def test_get_session_includes_ended_at(monkeypatch):
             "tone_confidence_feedback": "Confident.",
             "close_attempt_score": 6,
             "close_attempt_feedback": "Ask for next step earlier.",
+            "discovery_score": 9,
+            "discovery_feedback": "Great discovery questions.",
             "best_moment": "Asked for a follow-up.",
             "biggest_mistake": "Could have closed sooner.",
             "what_to_say_instead": "Can we schedule 15 minutes next week?",
@@ -371,11 +404,70 @@ def test_get_session_includes_ended_at(monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert datetime.fromisoformat(body["session"]["ended_at"].replace("Z", "+00:00")) == ended_at
+    assert body["scorecard"]["discovery_score"] == 9
     assert body["scorecard"]["annotations"] == [
         {
             "turn_number": 1,
             "type": "good",
             "label": "Strong opener",
             "insight": "The call started with a clear value statement.",
+            "rewrite": None,
+        }
+    ]
+
+
+def test_get_session_normalizes_annotations_from_native_json(monkeypatch):
+    session_id = "66666666-6666-6666-6666-666666666666"
+    connection = FakeConnection(
+        session_row={
+            "id": session_id,
+            "user_id": "temp-user-001",
+            "persona_id": "robert",
+            "conversation_id": "conv-2",
+            "started_at": datetime(2026, 3, 21, 15, 0, tzinfo=timezone.utc),
+            "ended_at": datetime(2026, 3, 21, 16, 30, tzinfo=timezone.utc),
+            "status": "completed",
+        },
+        scorecard_row={
+            "overall_score": 7,
+            "opener_score": 7,
+            "opener_feedback": "Good opener.",
+            "objection_handling_score": 8,
+            "objection_handling_feedback": "Handled well.",
+            "tone_confidence_score": 9,
+            "tone_confidence_feedback": "Confident.",
+            "close_attempt_score": 6,
+            "close_attempt_feedback": "Ask for next step earlier.",
+            "discovery_score": 8,
+            "discovery_feedback": "Strong discovery.",
+            "best_moment": "Asked for a follow-up.",
+            "biggest_mistake": "Could have closed sooner.",
+            "what_to_say_instead": "Can we schedule 15 minutes next week?",
+            "meeting_booked": False,
+            "annotations": [
+                {
+                    "turn_number": 2,
+                    "type": "bad",
+                    "label": "Missed discovery",
+                    "insight": "You moved too quickly to your product pitch.",
+                    "rewrite": "Before pitching, ask what they are hoping to improve.",
+                }
+            ],
+        },
+    )
+    client = install_test_client(monkeypatch, connection)
+
+    response = client.get(f"/sessions/{session_id}")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["scorecard"]["discovery_score"] == 8
+    assert body["scorecard"]["annotations"] == [
+        {
+            "turn_number": 2,
+            "type": "bad",
+            "label": "Missed discovery",
+            "insight": "You moved too quickly to your product pitch.",
+            "rewrite": "Before pitching, ask what they are hoping to improve.",
         }
     ]

@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS scorecards (
     tone_confidence_feedback TEXT,
     close_attempt_score INT CHECK (close_attempt_score BETWEEN 0 AND 10),
     close_attempt_feedback TEXT,
+    discovery_score INT CHECK (discovery_score BETWEEN 0 AND 10),
+    discovery_feedback TEXT,
     best_moment TEXT,
     biggest_mistake TEXT,
     what_to_say_instead TEXT,
