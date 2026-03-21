@@ -3,8 +3,6 @@
 import { PERSONAS } from '@/lib/personas';
 import { VoiceCallUI } from '@/components/VoiceCallUI';
 import { notFound, useParams } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createSession } from '@/lib/api';
 
@@ -12,6 +10,12 @@ const PERSONA_ID_MAP: Record<string, string> = {
   easy: 'marcus',
   medium: 'sarah',
   aggressive: 'robert',
+};
+
+const PERSONA_FULL_NAMES: Record<string, string> = {
+  marcus: 'Marcus Johnson',
+  sarah: 'Sarah Mitchell',
+  robert: 'Robert Chen',
 };
 
 export function getBackendPersonaId(personaId: string): string {
@@ -26,24 +30,20 @@ export default function SessionPage() {
   const [isCreatingSession, setIsCreatingSession] = useState(true);
   const backendPersonaId = getBackendPersonaId(id);
 
-  // Create session on page load
   useEffect(() => {
     const initSession = async () => {
       try {
-        console.log('[SessionPage] Creating session for persona:', backendPersonaId);
         const session = await createSession({
           user_id: 'temp-user-001',
           persona_id: backendPersonaId,
         });
         setSessionId(session.id);
-        console.log('[SessionPage] Session created:', session.id);
       } catch (err) {
         console.error('[SessionPage] Failed to create session:', err);
       } finally {
         setIsCreatingSession(false);
       }
     };
-
     initSession();
   }, [backendPersonaId]);
 
@@ -51,32 +51,29 @@ export default function SessionPage() {
     notFound();
   }
 
+  const personaFullName = PERSONA_FULL_NAMES[backendPersonaId] ?? persona.name;
+
   return (
-    <main className="min-h-screen bg-slate-50 p-8 flex flex-col">
-      <div className="max-w-4xl mx-auto w-full">
-        <Link href="/session/new" className="inline-flex items-center text-slate-500 hover:text-slate-900 mb-8">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Change Persona
-        </Link>
-
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Practice with {persona.name}</h1>
-          <p className="text-slate-500">{persona.description}</p>
+    <main className="h-screen bg-slate-900 flex flex-col overflow-hidden">
+      {isCreatingSession ? (
+        <div className="flex flex-col items-center justify-center h-full gap-4">
+          <div className="w-10 h-10 rounded-full border-4 border-slate-600 border-t-green-500 animate-spin" />
+          <p className="text-slate-500 text-sm">Preparing session...</p>
         </div>
-
-        {isCreatingSession ? (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-white rounded-2xl shadow-lg border border-slate-100">
-            <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin mb-4" />
-            <p className="text-slate-500">Preparing session...</p>
-          </div>
-        ) : sessionId ? (
-          <VoiceCallUI agentId={persona.agentId} personaId={backendPersonaId} sessionId={sessionId} />
-        ) : (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-8 bg-red-50 rounded-2xl border border-red-100">
-            <p className="text-red-700">Failed to create session. Please refresh the page.</p>
-          </div>
-        )}
-      </div>
+      ) : sessionId ? (
+        <VoiceCallUI
+          agentId={persona.agentId}
+          personaId={backendPersonaId}
+          sessionId={sessionId}
+          personaFullName={personaFullName}
+          personaRole={persona.name}
+          difficulty={persona.difficulty}
+        />
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full p-8">
+          <p className="text-red-400 text-sm">Failed to create session. Please refresh the page.</p>
+        </div>
+      )}
     </main>
   );
 }
